@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/view"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/query"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/query/input"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/view"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query/input"
 )
 
 type TodoListQueryHandler struct {

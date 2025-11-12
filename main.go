@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/container"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/config"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/handler/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/handler/query"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/router"
+	"github.com/tomoki-yamamura/eventsourcing-ec/container"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/query"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/router"
 )
 
 func main() {

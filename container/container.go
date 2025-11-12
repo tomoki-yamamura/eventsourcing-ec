@@ -3,18 +3,18 @@ package container
 import (
 	"context"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/config"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/repository"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/bus"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/client"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/eventstore"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/eventstore/deserializer"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/transaction"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/projector/todo"
-	commandUseCase "github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/gateway"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/readmodelstore"
-	queryUseCase "github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/query"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/bus"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/client"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/eventstore/deserializer"
+	kafkaEventStore "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/eventstore"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/todo"
+	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore"
+	queryUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
 )
 
 type Container struct {
@@ -52,7 +52,13 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	// Repository layer
 	c.Transaction = transaction.NewTransaction(databaseClient.GetDB())
 	c.Deserializer = deserializer.NewEventDeserializer()
-	c.EventStore = eventstore.NewEventStore(c.Deserializer)
+	
+	// Use Kafka Event Store instead of MySQL Event Store
+	eventStore, err := kafkaEventStore.NewKafkaEventStore(cfg.KafkaConfig.Brokers, c.Deserializer)
+	if err != nil {
+		return err
+	}
+	c.EventStore = eventStore
 
 	// Event Bus and Projector
 	c.EventBus = bus.NewInMemoryEventBus()

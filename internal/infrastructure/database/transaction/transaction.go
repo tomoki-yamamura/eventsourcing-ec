@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 )
 
 type txKeyType string

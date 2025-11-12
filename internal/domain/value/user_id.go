@@ -3,7 +3,7 @@ package value
 import (
 	"strings"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 )
 
 var (

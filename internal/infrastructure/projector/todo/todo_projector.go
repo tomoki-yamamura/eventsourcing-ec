@@ -3,11 +3,11 @@ package todo
 import (
 	"context"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/gateway"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/readmodelstore"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/readmodelstore/dto"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore/dto"
 )
 
 type TodoProjectorImpl struct {

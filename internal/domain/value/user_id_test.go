@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/value"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
 )
 
 func TestNewUserID(t *testing.T) {

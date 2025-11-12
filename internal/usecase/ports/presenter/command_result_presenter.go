@@ -3,7 +3,7 @@ package presenter
 import (
 	"context"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 )
 
 type CommandResultPresenter interface {

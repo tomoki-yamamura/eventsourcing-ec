@@ -10,10 +10,10 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/repository"
-	appErrors "github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/transaction"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 )
 
 type eventStoreImpl struct {

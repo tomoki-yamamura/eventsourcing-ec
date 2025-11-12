@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/readmodelstore/dto"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore/dto"
 )
 
 // InMemoryTodoListViewRepository implements both QueryTodoListReadModelStore and ProjectorTodoListReadModelStore

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter/viewmodel"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter/viewmodel"
 )
 
 type HTTPTodoListView struct {

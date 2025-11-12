@@ -7,6 +7,7 @@ import (
 type Config struct {
 	HTTPPort string `required:"true" envconfig:"HTTP_PORT"`
 	DatabaseConfig
+	KafkaConfig
 }
 
 func NewConfig() (*Config, error) {
@@ -24,6 +25,10 @@ type DatabaseConfig struct {
 	Host     string `required:"true" envconfig:"MYSQL_HOST"`
 	Port     string `required:"true" envconfig:"MYSQL_PORT"`
 	Name     string `required:"true" envconfig:"MYSQL_DATABASE"`
+}
+
+type KafkaConfig struct {
+	Brokers []string `required:"true" envconfig:"KAFKA_BROKERS"`
 }
 
 type TestDatabaseConfig struct {

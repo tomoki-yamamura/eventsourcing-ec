@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/aggregate"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/repository"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/value"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/command/input"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/gateway"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/aggregate"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command/input"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/presenter"
 )
 
 type TodoAddItemCommandInterface interface {

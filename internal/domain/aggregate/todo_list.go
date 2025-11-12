@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/entity"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/value"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/entity"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 )
 
 var ErrTooManyTodos = errors.UnpermittedOp.New("cannot add more than 3 todos per day")

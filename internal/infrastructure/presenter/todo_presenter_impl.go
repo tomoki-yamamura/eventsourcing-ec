@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter/viewmodel"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/presenter"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/query/output"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter/viewmodel"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query/output"
 )
 
 type HTTPTodoListPresenter struct {

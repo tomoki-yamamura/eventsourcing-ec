@@ -5,8 +5,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/config"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/client"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/client"
 
 	_ "github.com/go-sql-driver/mysql"
 )

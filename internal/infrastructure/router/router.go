@@ -2,8 +2,8 @@ package router
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/handler/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/handler/query"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/query"
 )
 
 type Router struct {

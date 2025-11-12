@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter/viewmodel"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter/viewmodel"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/presenter"
 )
 
 type CommandResultPresenterImpl struct {

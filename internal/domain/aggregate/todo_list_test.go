@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/aggregate"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/value"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/aggregate"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
 )
 
 func TestTodoListAggregate_CreateTodoList(t *testing.T) {

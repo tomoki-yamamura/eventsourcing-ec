@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/google/uuid"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/value"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
 )
 
 type AddTodoCommand struct {

@@ -17,3 +17,8 @@ export MYSQL_HOST=127.0.0.1
 # Test Database
 # ========================
 export MYSQL_TEST_DATABASE=event_test
+
+# ========================
+# Kafka (Event Store)
+# ========================
+export KAFKA_BROKERS=localhost:9092

@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/handler/request"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/presenter"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/view"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/command"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/command/input"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/request"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/presenter"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/view"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command/input"
 )
 
 type TodoAddItemCommandHandler struct {

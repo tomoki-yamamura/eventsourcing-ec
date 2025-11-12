@@ -3,8 +3,8 @@ package bus
 import (
 	"context"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/ports/gateway"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 )
 
 type InMemoryEventBus struct {

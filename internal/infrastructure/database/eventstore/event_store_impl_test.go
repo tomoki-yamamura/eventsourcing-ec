@@ -11,12 +11,12 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/config"
-	domainevent "github.com/tomoki-yamamura/eventsourcing-todo/internal/domain/event"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/errors"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/client"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/eventstore"
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/infrastructure/database/transaction"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	domainevent "github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/client"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/eventstore"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 )
 
 type testEvent struct {

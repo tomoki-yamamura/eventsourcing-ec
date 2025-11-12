@@ -3,7 +3,7 @@ package presenter
 import (
 	"context"
 
-	"github.com/tomoki-yamamura/eventsourcing-todo/internal/usecase/query/output"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query/output"
 )
 
 type TodoListPresenter interface {
