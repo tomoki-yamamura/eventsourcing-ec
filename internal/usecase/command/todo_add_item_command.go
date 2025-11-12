@@ -53,7 +53,7 @@ func (u *TodoAddItemCommand) Execute(ctx context.Context, input *input.AddTodoIn
 				return err
 			}
 
-			loadedEvents, err := u.eventStore.LoadEvents(ctx, aggregateUUID)
+			loadedEvents, err := u.eventStore.LoadEvents(ctx, aggregateUUID, "TodoList")
 			if err != nil {
 				return err
 			}
@@ -78,7 +78,7 @@ func (u *TodoAddItemCommand) Execute(ctx context.Context, input *input.AddTodoIn
 				return err
 			}
 
-			if err := u.eventStore.SaveEvents(ctx, todoList.GetAggregateID(), todoList.GetUncommittedEvents()); err != nil {
+			if err := u.eventStore.SaveEvents(ctx, todoList.GetAggregateID(), "TodoList", todoList.GetUncommittedEvents()); err != nil {
 				return err
 			}
 

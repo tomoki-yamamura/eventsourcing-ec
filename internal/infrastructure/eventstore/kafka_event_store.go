@@ -15,13 +15,10 @@ import (
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 )
 
-const (
-	eventTopicPrefix = "events"
-)
-
 type kafkaEventStore struct {
 	producer     sarama.SyncProducer
 	consumer     sarama.Consumer
+	router       TopicRouter
 	deserializer repository.EventDeserializer
 	brokers      []string
 }
@@ -35,7 +32,7 @@ type StoredEvent struct {
 	CreatedAt    time.Time   `json:"created_at"`
 }
 
-func NewKafkaEventStore(brokers []string, deserializer repository.EventDeserializer) (repository.EventStore, error) {
+func NewKafkaEventStore(brokers []string, router TopicRouter, deserializer repository.EventDeserializer) (repository.EventStore, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -55,15 +52,15 @@ func NewKafkaEventStore(brokers []string, deserializer repository.EventDeseriali
 	return &kafkaEventStore{
 		producer:     producer,
 		consumer:     consumer,
+		router:       router,
 		deserializer: deserializer,
 		brokers:      brokers,
 	}, nil
 }
 
-func (k *kafkaEventStore) SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error {
-	topic := k.getTopicName(aggregateID)
-
+func (k *kafkaEventStore) SaveEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string, events []event.Event) error {
 	for _, evt := range events {
+		topic := k.router.TopicFor(evt.GetEventType(), aggregateType)
 		storedEvent := StoredEvent{
 			EventID:     evt.GetEventID(),
 			EventType:   evt.GetEventType(),
@@ -105,8 +102,8 @@ func (k *kafkaEventStore) SaveEvents(ctx context.Context, aggregateID uuid.UUID,
 	return nil
 }
 
-func (k *kafkaEventStore) LoadEvents(ctx context.Context, aggregateID uuid.UUID) ([]event.Event, error) {
-	topic := k.getTopicName(aggregateID)
+func (k *kafkaEventStore) LoadEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string) ([]event.Event, error) {
+	topic := k.router.TopicFor("", aggregateType) // Use empty event type to get aggregate topic
 
 	partitionConsumer, err := k.consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
 	if err != nil {
@@ -129,7 +126,7 @@ func (k *kafkaEventStore) LoadEvents(ctx context.Context, aggregateID uuid.UUID)
 				return nil, appErrors.QueryError.Wrap(err, "failed to unmarshal stored event")
 			}
 
-			// 指定されたaggregateIDのイベントのみを取得
+			// Filter events by the specified aggregateID since we use aggregate-level topics
 			if storedEvent.AggregateID != aggregateID {
 				continue
 			}
@@ -147,6 +144,7 @@ func (k *kafkaEventStore) LoadEvents(ctx context.Context, aggregateID uuid.UUID)
 			events = append(events, evt)
 
 		case <-timeout.C:
+			// Timeout reached - return collected events
 			if len(events) == 0 {
 				return nil, appErrors.NotFound.New("no events found for aggregate")
 			}
@@ -159,11 +157,9 @@ func (k *kafkaEventStore) LoadEvents(ctx context.Context, aggregateID uuid.UUID)
 }
 
 func (k *kafkaEventStore) GetAllEvents(ctx context.Context) ([]event.Event, error) {
+	// Get all events from all aggregate topics
+	// Implementation simplified - returns error for now
 	return nil, appErrors.Unknown.New("GetAllEvents is not implemented for kafka event store")
-}
-
-func (k *kafkaEventStore) getTopicName(aggregateID uuid.UUID) string {
-	return fmt.Sprintf("%s-%s", eventTopicPrefix, aggregateID.String())
 }
 
 func (k *kafkaEventStore) Close() error {

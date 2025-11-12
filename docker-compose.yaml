@@ -22,6 +22,15 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
 
+  # Kafka Topic Initialization
+  init-topics:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka
+    entrypoint: ["/bin/bash", "-c", "/init-topics.sh"]
+    volumes:
+      - ./init-topics.sh:/init-topics.sh
+
   # MySQL - Read Model Store
   mysql:
     image: mysql:8.0

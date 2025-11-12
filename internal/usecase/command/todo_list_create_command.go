@@ -51,7 +51,7 @@ func (u *TodoListCreateCommand) Execute(ctx context.Context, input *input.Create
 			return err
 		}
 
-		if err := u.eventStore.SaveEvents(ctx, todoList.GetAggregateID(), todoList.GetUncommittedEvents()); err != nil {
+		if err := u.eventStore.SaveEvents(ctx, todoList.GetAggregateID(), "TodoList", todoList.GetUncommittedEvents()); err != nil {
 			return err
 		}
 
