@@ -1,4 +1,4 @@
-package eventstore
+package kafka
 
 type TopicRouter interface {
 	TopicFor(eventType string, aggregateType string) string
@@ -11,7 +11,7 @@ type StaticMapRouter struct {
 func NewStaticMapRouter() *StaticMapRouter {
 	return &StaticMapRouter{
 		aggregateTopicMap: map[string]string{
-			"Cart":      "ec.cart-events",
+			"Cart": "ec.cart-events",
 		},
 	}
 }

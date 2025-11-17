@@ -42,7 +42,6 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 			var cartUUID uuid.UUID
 			var err error
 			
-			// Generate new cart ID if not provided
 			if input.CartID == "" {
 				cartUUID = uuid.New()
 			} else {
