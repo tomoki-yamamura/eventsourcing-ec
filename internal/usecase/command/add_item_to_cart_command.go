@@ -19,14 +19,16 @@ type CartAddItemCommandInterface interface {
 }
 
 type CartAddItemCommand struct {
-	tx         repository.Transaction
-	eventStore repository.EventStore
+	tx             repository.Transaction
+	eventStore     repository.EventStore
+	outboxRepo     repository.OutboxRepository
 }
 
-func NewCartAddItemCommand(tx repository.Transaction, eventStore repository.EventStore) CartAddItemCommandInterface {
+func NewCartAddItemCommand(tx repository.Transaction, eventStore repository.EventStore, outboxRepo repository.OutboxRepository) CartAddItemCommandInterface {
 	return &CartAddItemCommand{
 		tx:         tx,
 		eventStore: eventStore,
+		outboxRepo: outboxRepo,
 	}
 }
 
@@ -86,6 +88,11 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 			}
 
 			if err := u.eventStore.SaveEvents(ctx, cart.GetAggregateID(), "Cart", cart.GetUncommittedEvents()); err != nil {
+				return err
+			}
+
+			// Save events to outbox for eventual publishing to Kafka
+			if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), "Cart", cart.GetUncommittedEvents()); err != nil {
 				return err
 			}
 
