@@ -63,7 +63,7 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 				return err
 			}
 
-			loadedEvents, err := u.eventStore.LoadEvents(ctx, cartUUID, "Cart")
+			loadedEvents, err := u.eventStore.LoadEvents(ctx, cartUUID)
 			if err != nil && !errors.IsCode(err, errors.NotFound) {
 				return err
 			}
@@ -87,11 +87,10 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 				return err
 			}
 
-			if err := u.eventStore.SaveEvents(ctx, cart.GetAggregateID(), "Cart", cart.GetUncommittedEvents()); err != nil {
+			if err := u.eventStore.SaveEvents(ctx, cart.GetAggregateID(), cart.GetUncommittedEvents()); err != nil {
 				return err
 			}
 
-			// Save events to outbox for eventual publishing to Kafka
 			if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), "Cart", cart.GetUncommittedEvents()); err != nil {
 				return err
 			}

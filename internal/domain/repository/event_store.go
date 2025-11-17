@@ -8,6 +8,6 @@ import (
 )
 
 type EventStore interface {
-	SaveEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string, events []event.Event) error
-	LoadEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string) ([]event.Event, error)
+	SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error
+	LoadEvents(ctx context.Context, aggregateID uuid.UUID) ([]event.Event, error)
 }

@@ -26,7 +26,7 @@ func NewEventStore(deserializer repository.EventDeserializer) repository.EventSt
 	}
 }
 
-func (e *eventStoreImpl) SaveEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string, events []event.Event) error {
+func (e *eventStoreImpl) SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error {
 	tx, err := transaction.GetTx(ctx)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func isDuplicateKeyError(err error) bool {
 	return strings.Contains(msg, "duplicate") || strings.Contains(msg, "constraint failed")
 }
 
-func (e *eventStoreImpl) LoadEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string) ([]event.Event, error) {
+func (e *eventStoreImpl) LoadEvents(ctx context.Context, aggregateID uuid.UUID) ([]event.Event, error) {
 	tx, err := transaction.GetTx(ctx)
 	if err != nil {
 		return nil, err
