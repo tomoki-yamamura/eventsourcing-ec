@@ -81,7 +81,7 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 	// If cart is new, create it first
 	if a.IsNew() {
 		a.aggregateID = cmd.CartID
-		a.userID = cmd.CartID // Simplified: using CartID as UserID for now
+		a.userID = cmd.UserID
 		a.status = CartStatusOpen
 		a.version = 1
 

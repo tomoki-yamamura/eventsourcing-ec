@@ -9,7 +9,6 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command/input"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/presenter"
 )
 
@@ -20,14 +19,12 @@ type TodoListCreateCommandInterface interface {
 type TodoListCreateCommand struct {
 	tx         repository.Transaction
 	eventStore repository.EventStore
-	eventBus   gateway.EventPublisher
 }
 
-func NewTodoListCreateCommand(tx repository.Transaction, eventStore repository.EventStore, eventBus gateway.EventPublisher) TodoListCreateCommandInterface {
+func NewTodoListCreateCommand(tx repository.Transaction, eventStore repository.EventStore) TodoListCreateCommandInterface {
 	return &TodoListCreateCommand{
 		tx:         tx,
 		eventStore: eventStore,
-		eventBus:   eventBus,
 	}
 }
 
@@ -58,11 +55,6 @@ func (u *TodoListCreateCommand) Execute(ctx context.Context, input *input.Create
 		aggregateID = todoList.GetAggregateID().String()
 		version = todoList.GetVersion()
 		events = todoList.GetUncommittedEvents()
-
-		evs := todoList.GetUncommittedEvents()
-		u.tx.AfterCommit(func() error {
-			return u.eventBus.Publish(context.Background(), evs...)
-		})
 
 		todoList.MarkEventsAsCommitted()
 

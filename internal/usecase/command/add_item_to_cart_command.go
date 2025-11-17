@@ -11,7 +11,6 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command/input"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/presenter"
 )
 
@@ -22,14 +21,12 @@ type CartAddItemCommandInterface interface {
 type CartAddItemCommand struct {
 	tx         repository.Transaction
 	eventStore repository.EventStore
-	eventBus   gateway.EventPublisher
 }
 
-func NewCartAddItemCommand(tx repository.Transaction, eventStore repository.EventStore, eventBus gateway.EventPublisher) CartAddItemCommandInterface {
+func NewCartAddItemCommand(tx repository.Transaction, eventStore repository.EventStore) CartAddItemCommandInterface {
 	return &CartAddItemCommand{
 		tx:         tx,
 		eventStore: eventStore,
-		eventBus:   eventBus,
 	}
 }
 
@@ -42,7 +39,20 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 
 	for attempt := range maxRetries {
 		err = u.tx.RWTx(ctx, func(ctx context.Context) error {
-			cartUUID, err := uuid.Parse(input.CartID)
+			var cartUUID uuid.UUID
+			var err error
+			
+			// Generate new cart ID if not provided
+			if input.CartID == "" {
+				cartUUID = uuid.New()
+			} else {
+				cartUUID, err = uuid.Parse(input.CartID)
+				if err != nil {
+					return err
+				}
+			}
+
+			userUUID, err := uuid.Parse(input.UserID)
 			if err != nil {
 				return err
 			}
@@ -66,6 +76,7 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 
 			cmd := command.AddItemToCartCommand{
 				CartID:   cartUUID,
+				UserID:   userUUID,
 				ItemID:   itemUUID,
 				Quantity: input.Quantity,
 				Price:    input.Price,
@@ -82,11 +93,6 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 			aggregateID = cart.GetAggregateID().String()
 			version = cart.GetVersion()
 			events = cart.GetUncommittedEvents()
-
-			evs := cart.GetUncommittedEvents()
-			u.tx.AfterCommit(func() error {
-				return u.eventBus.Publish(context.Background(), evs...)
-			})
 
 			cart.MarkEventsAsCommitted()
 
