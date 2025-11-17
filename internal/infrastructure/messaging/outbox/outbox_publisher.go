@@ -14,6 +14,7 @@ import (
 type OutboxPublisher struct {
 	outboxRepo      repository.OutboxRepository
 	kafkaProducer   *kafka.Producer
+	topicRouter     kafka.TopicRouter
 	pollingInterval time.Duration
 	batchSize       int
 	maxRetries      int
@@ -22,6 +23,7 @@ type OutboxPublisher struct {
 func NewOutboxPublisher(
 	outboxRepo repository.OutboxRepository,
 	kafkaProducer *kafka.Producer,
+	topicRouter kafka.TopicRouter,
 	pollingInterval time.Duration,
 	batchSize int,
 	maxRetries int,
@@ -29,6 +31,7 @@ func NewOutboxPublisher(
 	return &OutboxPublisher{
 		outboxRepo:      outboxRepo,
 		kafkaProducer:   kafkaProducer,
+		topicRouter:     topicRouter,
 		pollingInterval: pollingInterval,
 		batchSize:       batchSize,
 		maxRetries:      maxRetries,
@@ -83,7 +86,7 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 			Version:     outboxEvent.Version,
 		}
 
-		topic := "ec.cart-events"
+		topic := op.topicRouter.TopicFor(outboxEvent.EventType, outboxEvent.AggregateType)
 		if err := op.publishToKafka(topic, outboxEvent.AggregateID.String(), message); err != nil {
 			log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
 			
