@@ -17,8 +17,9 @@ var (
 type CartStatus string
 
 const (
-	CartStatusOpen   CartStatus = "OPEN"
-	CartStatusClosed CartStatus = "CLOSED"
+	CartStatusOpen      CartStatus = "OPEN"
+	CartStatusClosed    CartStatus = "CLOSED"
+	CartStatusAbandoned CartStatus = "ABANDONED"
 )
 
 type CartAggregate struct {
@@ -34,25 +35,13 @@ func NewCartAggregate() *CartAggregate {
 	return &CartAggregate{
 		items:             make([]*entity.CartItem, 0),
 		status:            CartStatusOpen,
-		version:           -1, // -1 indicates new aggregate
+		version:           -1,
 		uncommittedEvents: make([]event.Event, 0),
 	}
 }
 
 func (a *CartAggregate) GetAggregateID() uuid.UUID {
 	return a.aggregateID
-}
-
-func (a *CartAggregate) GetUserID() uuid.UUID {
-	return a.userID
-}
-
-func (a *CartAggregate) GetItems() []*entity.CartItem {
-	return a.items
-}
-
-func (a *CartAggregate) GetStatus() CartStatus {
-	return a.status
 }
 
 func (a *CartAggregate) GetVersion() int {
@@ -107,7 +96,7 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 				return err
 			}
 			a.items[i] = entity.NewCartItem(cmd.ItemID, newQuantity, price)
-			
+
 			a.version++
 			evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, quantity.Int(), price.Float64())
 			a.uncommittedEvents = append(a.uncommittedEvents, evt)
@@ -125,16 +114,15 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 	return nil
 }
 
-// GetTotalAmount calculates total amount for purchase
-func (a *CartAggregate) GetTotalAmount() float64 {
+func (a *CartAggregate) GetTotalAmount() value.Price {
 	total := 0.0
 	for _, item := range a.items {
-		total += item.GetTotal()
+		total += item.GetTotal().Float64()
 	}
-	return total
+	totalPrice, _ := value.NewPrice(total)
+	return totalPrice
 }
 
-// ExecutePurchaseCartCommand handles cart purchase (closes the cart)
 func (a *CartAggregate) ExecutePurchaseCartCommand() error {
 	if a.isNew() {
 		return errors.UnpermittedOp.New("cannot purchase empty cart")
@@ -150,13 +138,12 @@ func (a *CartAggregate) ExecutePurchaseCartCommand() error {
 
 	a.version++
 	totalAmount := a.GetTotalAmount()
-	evt := event.NewCartPurchasedEvent(a.aggregateID, a.version, totalAmount)
+	evt := event.NewCartPurchasedEvent(a.aggregateID, a.version, totalAmount.Float64())
 	a.uncommittedEvents = append(a.uncommittedEvents, evt)
 
 	return nil
 }
 
-// Hydration rebuilds the aggregate from events
 func (a *CartAggregate) Hydration(events []event.Event) error {
 	for _, evt := range events {
 		switch e := evt.(type) {
@@ -175,7 +162,6 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 				return err
 			}
 
-			// Update existing item or add new one
 			found := false
 			for i, item := range a.items {
 				if item.ItemID == e.GetItemID() {

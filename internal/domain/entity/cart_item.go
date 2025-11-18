@@ -31,6 +31,10 @@ func (ci *CartItem) GetPrice() value.Price {
 	return ci.Price
 }
 
-func (ci *CartItem) GetTotal() float64 {
-	return ci.Price.Float64() * float64(ci.Quantity.Int())
+func (ci *CartItem) GetTotal() value.Price {
+	// Calculate total: price * quantity
+	totalFloat := ci.Price.Float64() * float64(ci.Quantity.Int())
+	// value.Price validation is handled in NewPrice
+	total, _ := value.NewPrice(totalFloat) // Should never error since individual price was already validated
+	return total
 }
