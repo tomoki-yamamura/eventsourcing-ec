@@ -11,14 +11,17 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 )
 
+const (
+	DefaultPollingInterval = 200 * time.Millisecond
+	DefaultBatchSize       = 100
+	DefaultMaxRetries      = 3
+)
+
 type OutboxPublisher struct {
-	tx              repository.Transaction
-	outboxRepo      repository.OutboxRepository
-	kafkaProducer   *kafka.Producer
-	topicRouter     kafka.TopicRouter
-	pollingInterval time.Duration
-	batchSize       int
-	maxRetries      int
+	tx            repository.Transaction
+	outboxRepo    repository.OutboxRepository
+	kafkaProducer *kafka.Producer
+	topicRouter   kafka.TopicRouter
 }
 
 func NewOutboxPublisher(
@@ -26,25 +29,19 @@ func NewOutboxPublisher(
 	outboxRepo repository.OutboxRepository,
 	kafkaProducer *kafka.Producer,
 	topicRouter kafka.TopicRouter,
-	pollingInterval time.Duration,
-	batchSize int,
-	maxRetries int,
 ) *OutboxPublisher {
 	return &OutboxPublisher{
-		tx:              tx,
-		outboxRepo:      outboxRepo,
-		kafkaProducer:   kafkaProducer,
-		topicRouter:     topicRouter,
-		pollingInterval: pollingInterval,
-		batchSize:       batchSize,
-		maxRetries:      maxRetries,
+		tx:            tx,
+		outboxRepo:    outboxRepo,
+		kafkaProducer: kafkaProducer,
+		topicRouter:   topicRouter,
 	}
 }
 
 func (op *OutboxPublisher) Start(ctx context.Context) error {
-	log.Printf("Starting outbox publisher with polling interval: %v", op.pollingInterval)
-	
-	ticker := time.NewTicker(op.pollingInterval)
+	log.Printf("Starting outbox publisher with polling interval: %v", DefaultPollingInterval)
+
+	ticker := time.NewTicker(DefaultPollingInterval)
 	defer ticker.Stop()
 
 	for {
@@ -64,7 +61,7 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 	var pendingEvents []repository.OutboxEvent
 	err := op.tx.RWTx(ctx, func(ctx context.Context) error {
 		var err error
-		pendingEvents, err = op.outboxRepo.GetPendingEvents(ctx, op.batchSize)
+		pendingEvents, err = op.outboxRepo.GetPendingEvents(ctx, DefaultBatchSize)
 		return err
 	})
 	if err != nil {
@@ -78,11 +75,11 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 	log.Printf("Found %d pending events to publish", len(pendingEvents))
 
 	var publishedEventIDs []uuid.UUID
-	
+
 	for _, outboxEvent := range pendingEvents {
 		// Skip events that exceeded max retries
-		if outboxEvent.RetryCount >= op.maxRetries {
-			log.Printf("Skipping event %s - max retries (%d) exceeded", outboxEvent.EventID, op.maxRetries)
+		if outboxEvent.RetryCount >= DefaultMaxRetries {
+			log.Printf("Skipping event %s - max retries (%d) exceeded", outboxEvent.EventID, DefaultMaxRetries)
 			continue
 		}
 
@@ -97,7 +94,7 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 		topic := op.topicRouter.TopicFor(outboxEvent.EventType, outboxEvent.AggregateType)
 		if err := op.publishToKafka(topic, outboxEvent.AggregateID.String(), message); err != nil {
 			log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
-			
+
 			// Mark failed and increment retry count in separate transactions
 			_ = op.tx.RWTx(ctx, func(ctx context.Context) error {
 				if err := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); err != nil {
