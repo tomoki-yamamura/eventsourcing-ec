@@ -14,14 +14,10 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 )
 
-type outboxRepositoryImpl struct {
-	db *sql.DB
-}
+type outboxRepositoryImpl struct{}
 
-func NewOutboxRepository(db *sql.DB) repository.OutboxRepository {
-	return &outboxRepositoryImpl{
-		db: db,
-	}
+func NewOutboxRepository() repository.OutboxRepository {
+	return &outboxRepositoryImpl{}
 }
 
 func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error {
@@ -68,14 +64,9 @@ func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.
 }
 
 func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) ([]repository.OutboxEvent, error) {
-	var executor interface {
-		QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	}
-	
-	if tx, err := transaction.GetTx(ctx); err == nil {
-		executor = tx
-	} else {
-		executor = o.db
+	tx, err := transaction.GetTx(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -87,7 +78,7 @@ func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) 
 		LIMIT ?
 	`
 
-	rows, err := executor.QueryContext(ctx, query, repository.OutboxStatusPending, limit)
+	rows, err := tx.QueryContext(ctx, query, repository.OutboxStatusPending, limit)
 	if err != nil {
 		return nil, appErrors.QueryError.Wrap(err, "failed to get pending events")
 	}
@@ -139,18 +130,13 @@ func (o *outboxRepositoryImpl) MarkAsPublished(ctx context.Context, eventIDs []u
 		return nil
 	}
 
-	var executor interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	}
-	
-	if tx, err := transaction.GetTx(ctx); err == nil {
-		executor = tx
-	} else {
-		executor = o.db
+	tx, err := transaction.GetTx(ctx)
+	if err != nil {
+		return err
 	}
 
 	placeholders := make([]string, len(eventIDs))
-	args := make([]interface{}, len(eventIDs)+2)
+	args := make([]any, len(eventIDs)+2)
 	args[0] = repository.OutboxStatusPublished
 	args[1] = time.Now()
 
@@ -165,7 +151,7 @@ func (o *outboxRepositoryImpl) MarkAsPublished(ctx context.Context, eventIDs []u
 		WHERE event_id IN (` + strings.Join(placeholders, ", ") + `)
 	`
 
-	_, err := executor.ExecContext(ctx, query, args...)
+	_, err = tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return appErrors.RepositoryError.Wrap(err, "failed to mark events as published")
 	}
@@ -174,14 +160,9 @@ func (o *outboxRepositoryImpl) MarkAsPublished(ctx context.Context, eventIDs []u
 }
 
 func (o *outboxRepositoryImpl) MarkAsFailed(ctx context.Context, eventID uuid.UUID, errorMessage string) error {
-	var executor interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	}
-	
-	if tx, err := transaction.GetTx(ctx); err == nil {
-		executor = tx
-	} else {
-		executor = o.db
+	tx, err := transaction.GetTx(ctx)
+	if err != nil {
+		return err
 	}
 
 	query := `
@@ -190,7 +171,7 @@ func (o *outboxRepositoryImpl) MarkAsFailed(ctx context.Context, eventID uuid.UU
 		WHERE event_id = ?
 	`
 
-	_, err := executor.ExecContext(ctx, query, repository.OutboxStatusFailed, errorMessage, eventID)
+	_, err = tx.ExecContext(ctx, query, repository.OutboxStatusFailed, errorMessage, eventID)
 	if err != nil {
 		return appErrors.RepositoryError.Wrap(err, "failed to mark event as failed")
 	}
@@ -199,14 +180,9 @@ func (o *outboxRepositoryImpl) MarkAsFailed(ctx context.Context, eventID uuid.UU
 }
 
 func (o *outboxRepositoryImpl) IncrementRetryCount(ctx context.Context, eventID uuid.UUID) error {
-	var executor interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	}
-	
-	if tx, err := transaction.GetTx(ctx); err == nil {
-		executor = tx
-	} else {
-		executor = o.db
+	tx, err := transaction.GetTx(ctx)
+	if err != nil {
+		return err
 	}
 
 	query := `
@@ -215,11 +191,10 @@ func (o *outboxRepositoryImpl) IncrementRetryCount(ctx context.Context, eventID 
 		WHERE event_id = ?
 	`
 
-	_, err := executor.ExecContext(ctx, query, eventID)
+	_, err = tx.ExecContext(ctx, query, eventID)
 	if err != nil {
 		return appErrors.RepositoryError.Wrap(err, "failed to increment retry count")
 	}
 
 	return nil
 }
-

@@ -12,6 +12,7 @@ import (
 )
 
 type OutboxPublisher struct {
+	tx              repository.Transaction
 	outboxRepo      repository.OutboxRepository
 	kafkaProducer   *kafka.Producer
 	topicRouter     kafka.TopicRouter
@@ -21,6 +22,7 @@ type OutboxPublisher struct {
 }
 
 func NewOutboxPublisher(
+	tx repository.Transaction,
 	outboxRepo repository.OutboxRepository,
 	kafkaProducer *kafka.Producer,
 	topicRouter kafka.TopicRouter,
@@ -29,6 +31,7 @@ func NewOutboxPublisher(
 	maxRetries int,
 ) *OutboxPublisher {
 	return &OutboxPublisher{
+		tx:              tx,
 		outboxRepo:      outboxRepo,
 		kafkaProducer:   kafkaProducer,
 		topicRouter:     topicRouter,
@@ -48,7 +51,7 @@ func (op *OutboxPublisher) Start(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			log.Println("Outbox publisher stopped")
-			return ctx.Err()
+			return nil
 		case <-ticker.C:
 			if err := op.publishPendingEvents(ctx); err != nil {
 				log.Printf("Error publishing pending events: %v", err)
@@ -58,7 +61,12 @@ func (op *OutboxPublisher) Start(ctx context.Context) error {
 }
 
 func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
-	pendingEvents, err := op.outboxRepo.GetPendingEvents(ctx, op.batchSize)
+	var pendingEvents []repository.OutboxEvent
+	err := op.tx.RWTx(ctx, func(ctx context.Context) error {
+		var err error
+		pendingEvents, err = op.outboxRepo.GetPendingEvents(ctx, op.batchSize)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -90,12 +98,16 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 		if err := op.publishToKafka(topic, outboxEvent.AggregateID.String(), message); err != nil {
 			log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
 			
-			if err := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); err != nil {
-				log.Printf("Failed to mark event as failed: %v", err)
-			}
-			if err := op.outboxRepo.IncrementRetryCount(ctx, outboxEvent.EventID); err != nil {
-				log.Printf("Failed to increment retry count: %v", err)
-			}
+			// Mark failed and increment retry count in separate transactions
+			_ = op.tx.RWTx(ctx, func(ctx context.Context) error {
+				if err := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); err != nil {
+					log.Printf("Failed to mark event as failed: %v", err)
+				}
+				if err := op.outboxRepo.IncrementRetryCount(ctx, outboxEvent.EventID); err != nil {
+					log.Printf("Failed to increment retry count: %v", err)
+				}
+				return nil
+			})
 			continue
 		}
 
@@ -103,8 +115,12 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 		log.Printf("Successfully published event %s to topic %s", outboxEvent.EventID, topic)
 	}
 
+	// Mark all successfully published events in a single transaction
 	if len(publishedEventIDs) > 0 {
-		if err := op.outboxRepo.MarkAsPublished(ctx, publishedEventIDs); err != nil {
+		err := op.tx.RWTx(ctx, func(ctx context.Context) error {
+			return op.outboxRepo.MarkAsPublished(ctx, publishedEventIDs)
+		})
+		if err != nil {
 			log.Printf("Failed to mark events as published: %v", err)
 			return err
 		}
