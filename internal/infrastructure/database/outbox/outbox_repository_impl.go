@@ -24,7 +24,7 @@ func NewOutboxRepository(db *sql.DB) repository.OutboxRepository {
 	}
 }
 
-func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string, events []event.Event) error {
+func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error {
 	tx, err := transaction.GetTx(ctx)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.
 		_, err = tx.ExecContext(ctx, query,
 			evt.GetEventID(),
 			aggregateID,
-			aggregateType,
+			evt.GetAggregateType(),
 			evt.GetEventType(),
 			eventData,
 			evt.GetVersion(),

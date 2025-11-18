@@ -91,7 +91,7 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 
 	for i, item := range a.items {
 		if item.ItemID == cmd.ItemID {
-			newQuantity, err := value.NewQuantity(item.Quantity.Int() + quantity.Int())
+			newQuantity, err := item.Quantity.Add(quantity)
 			if err != nil {
 				return err
 			}
@@ -153,22 +153,13 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 			a.status = CartStatusOpen
 			a.version = e.GetVersion()
 		case *event.ItemAddedToCartEvent:
-			quantity, err := value.NewQuantity(e.GetQuantity())
-			if err != nil {
-				return err
-			}
-			price, err := value.NewPrice(e.GetPrice())
-			if err != nil {
-				return err
-			}
+			quantity, _ := value.NewQuantity(e.GetQuantity())
+			price, _ := value.NewPrice(e.GetPrice())
 
 			found := false
 			for i, item := range a.items {
 				if item.ItemID == e.GetItemID() {
-					newQuantity, err := value.NewQuantity(item.Quantity.Int() + quantity.Int())
-					if err != nil {
-						return err
-					}
+					newQuantity, _ := item.Quantity.Add(quantity)
 					a.items[i] = entity.NewCartItem(e.GetItemID(), newQuantity, price)
 					found = true
 					break

@@ -19,9 +19,9 @@ type CartAddItemCommandInterface interface {
 }
 
 type CartAddItemCommand struct {
-	tx             repository.Transaction
-	eventStore     repository.EventStore
-	outboxRepo     repository.OutboxRepository
+	tx         repository.Transaction
+	eventStore repository.EventStore
+	outboxRepo repository.OutboxRepository
 }
 
 func NewCartAddItemCommand(tx repository.Transaction, eventStore repository.EventStore, outboxRepo repository.OutboxRepository) CartAddItemCommandInterface {
@@ -43,7 +43,7 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 		err = u.tx.RWTx(ctx, func(ctx context.Context) error {
 			var cartUUID uuid.UUID
 			var err error
-			
+
 			if input.CartID == "" {
 				cartUUID = uuid.New()
 			} else {
@@ -91,10 +91,9 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 				return err
 			}
 
-			// Get aggregate type from the first event (all events in a batch have the same aggregate type)
 			events := cart.GetUncommittedEvents()
 			if len(events) > 0 {
-				if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), events[0].GetAggregateType(), events); err != nil {
+				if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), events); err != nil {
 					return err
 				}
 			}

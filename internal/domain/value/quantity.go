@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrQuantityInvalid = errors.InvalidParameter.New("quantity must be greater than 0")
+	ErrQuantityInvalid  = errors.InvalidParameter.New("quantity must be greater than 0")
 	ErrQuantityTooLarge = errors.InvalidParameter.New("quantity cannot exceed 1000")
 )
 
@@ -25,4 +25,9 @@ func NewQuantity(quantity int) (Quantity, error) {
 
 func (q Quantity) Int() int {
 	return int(q)
+}
+
+func (q Quantity) Add(other Quantity) (Quantity, error) {
+	newValue := q.Int() + other.Int()
+	return NewQuantity(newValue)
 }

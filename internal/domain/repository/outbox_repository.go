@@ -32,7 +32,7 @@ type OutboxEvent struct {
 }
 
 type OutboxRepository interface {
-	SaveEvents(ctx context.Context, aggregateID uuid.UUID, aggregateType string, events []event.Event) error
+	SaveEvents(ctx context.Context, aggregateID uuid.UUID, events []event.Event) error
 	GetPendingEvents(ctx context.Context, limit int) ([]OutboxEvent, error)
 	MarkAsPublished(ctx context.Context, eventIDs []uuid.UUID) error
 	MarkAsFailed(ctx context.Context, eventID uuid.UUID, errorMessage string) error
