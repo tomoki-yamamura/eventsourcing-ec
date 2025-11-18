@@ -91,8 +91,12 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 				return err
 			}
 
-			if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), "Cart", cart.GetUncommittedEvents()); err != nil {
-				return err
+			// Get aggregate type from the first event (all events in a batch have the same aggregate type)
+			events := cart.GetUncommittedEvents()
+			if len(events) > 0 {
+				if err := u.outboxRepo.SaveEvents(ctx, cart.GetAggregateID(), events[0].GetAggregateType(), events); err != nil {
+					return err
+				}
 			}
 
 			aggregateID = cart.GetAggregateID().String()

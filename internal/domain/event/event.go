@@ -12,4 +12,5 @@ type Event interface {
 	GetTimestamp() time.Time
 	GetVersion() int
 	GetEventType() string
+	GetAggregateType() string
 }

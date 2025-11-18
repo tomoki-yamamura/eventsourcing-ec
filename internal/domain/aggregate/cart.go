@@ -67,25 +67,25 @@ func (a *CartAggregate) MarkEventsAsCommitted() {
 	a.uncommittedEvents = make([]event.Event, 0)
 }
 
-func (a *CartAggregate) IsNew() bool {
+func (a *CartAggregate) isNew() bool {
 	return a.version == -1
 }
 
-// ExecuteAddItemToCartCommand handles adding items to cart (creates cart if new)
+func (a *CartAggregate) isCartAvailable() bool {
+	return a.status != CartStatusClosed
+}
+
 func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCommand) error {
-	// Check if cart is closed
-	if a.status == CartStatusClosed {
+	if !a.isCartAvailable() {
 		return ErrCartClosed
 	}
 
-	// If cart is new, create it first
-	if a.IsNew() {
+	if a.isNew() {
 		a.aggregateID = cmd.CartID
 		a.userID = cmd.UserID
 		a.status = CartStatusOpen
 		a.version = 1
 
-		// Create CartCreated event
 		evt := event.NewCartCreatedEvent(a.aggregateID, a.version, a.userID)
 		a.uncommittedEvents = append(a.uncommittedEvents, evt)
 	}
@@ -100,7 +100,6 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 		return err
 	}
 
-	// Check if item already exists, update quantity
 	for i, item := range a.items {
 		if item.ItemID == cmd.ItemID {
 			newQuantity, err := value.NewQuantity(item.Quantity.Int() + quantity.Int())
@@ -116,7 +115,6 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 		}
 	}
 
-	// Add new item
 	cartItem := entity.NewCartItem(cmd.ItemID, quantity, price)
 	a.items = append(a.items, cartItem)
 
@@ -138,11 +136,11 @@ func (a *CartAggregate) GetTotalAmount() float64 {
 
 // ExecutePurchaseCartCommand handles cart purchase (closes the cart)
 func (a *CartAggregate) ExecutePurchaseCartCommand() error {
-	if a.IsNew() {
+	if a.isNew() {
 		return errors.UnpermittedOp.New("cannot purchase empty cart")
 	}
 
-	if a.status == CartStatusClosed {
+	if !a.isCartAvailable() {
 		return ErrCartClosed
 	}
 

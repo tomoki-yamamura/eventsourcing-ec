@@ -46,6 +46,10 @@ func (e CartPurchasedEvent) GetEventType() string {
 	return "CartPurchasedEvent"
 }
 
+func (e CartPurchasedEvent) GetAggregateType() string {
+	return "Cart"
+}
+
 func (e *CartPurchasedEvent) GetTotalAmount() float64 {
 	return e.TotalAmount
 }

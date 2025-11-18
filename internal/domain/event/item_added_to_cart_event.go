@@ -55,6 +55,11 @@ func (e ItemAddedToCartEvent) GetEventType() string {
 	return "ItemAddedToCartEvent"
 }
 
+// GetAggregateType returns the aggregate type
+func (e ItemAddedToCartEvent) GetAggregateType() string {
+	return "Cart"
+}
+
 // GetItemID returns the item ID
 func (e *ItemAddedToCartEvent) GetItemID() uuid.UUID {
 	return e.ItemID
