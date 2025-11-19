@@ -10,8 +10,8 @@ import (
 type ItemAddedToCartEvent struct {
 	AggregateID uuid.UUID `json:"aggregate_id"`
 	ItemID      uuid.UUID `json:"item_id"`
-	Quantity    int        `json:"quantity"`
-	Price       float64    `json:"price"`
+	Quantity    int       `json:"quantity"`
+	Price       float64   `json:"price"`
 	EventID     uuid.UUID `json:"event_id"`
 	Timestamp   time.Time `json:"timestamp"`
 	Version     int       `json:"version"`

@@ -97,7 +97,6 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 		cart = &cartView
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

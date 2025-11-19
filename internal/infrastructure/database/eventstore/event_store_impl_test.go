@@ -33,6 +33,7 @@ func (e testEvent) GetEventID() uuid.UUID     { return e.EventID }
 func (e testEvent) GetEventType() string      { return e.Type }
 func (e testEvent) GetVersion() int           { return e.Version }
 func (e testEvent) GetTimestamp() time.Time   { return e.CreatedAt }
+func (e testEvent) GetAggregateType() string  { return "cart" }
 
 type fakeDeserializer struct{}
 

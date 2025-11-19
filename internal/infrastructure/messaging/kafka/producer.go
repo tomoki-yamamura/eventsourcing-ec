@@ -14,7 +14,6 @@ type Producer struct {
 	brokers  []string
 }
 
-
 func NewProducer(brokers []string) (messaging.MessageProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true

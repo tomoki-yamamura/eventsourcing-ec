@@ -33,7 +33,7 @@ func (es *EventSubscriber) Subscribe(handler func(context.Context, event.Event) 
 		if err != nil {
 			return err
 		}
-		
+
 		domainEvent, err := es.deserializer.Deserialize(message.Type, dataBytes)
 		if err != nil {
 			return err

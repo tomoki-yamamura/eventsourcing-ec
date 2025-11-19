@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrPriceInvalid = errors.InvalidParameter.New("price must be greater than or equal to 0")
+	ErrPriceInvalid  = errors.InvalidParameter.New("price must be greater than or equal to 0")
 	ErrPriceTooLarge = errors.InvalidParameter.New("price cannot exceed 1000000")
 )
 

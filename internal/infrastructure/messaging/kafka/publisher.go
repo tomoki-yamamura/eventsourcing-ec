@@ -13,7 +13,6 @@ type EventPublisher struct {
 	topicRouter messaging.TopicRouter
 }
 
-
 func NewEventPublisher(producer messaging.MessageProducer, router messaging.TopicRouter) gateway.EventPublisher {
 	return &EventPublisher{
 		producer:    producer,
@@ -26,7 +25,7 @@ func (ep *EventPublisher) Publish(ctx context.Context, events ...event.Event) er
 		// Determine topic based on aggregate type
 		// For now, we'll use "Cart" as default aggregate type
 		topic := ep.topicRouter.TopicFor(evt.GetEventType(), "Cart")
-		
+
 		message := &messaging.Message{
 			ID:          evt.GetEventID(),
 			Type:        evt.GetEventType(),
