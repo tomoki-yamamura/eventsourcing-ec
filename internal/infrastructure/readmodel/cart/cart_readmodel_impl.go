@@ -35,10 +35,10 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 			FROM carts 
 			WHERE id = ?
 		`
-		
+
 		var cartView dto.CartViewDTO
 		var purchasedAt sql.NullTime
-		
+
 		err = tx.QueryRowContext(ctx, cartQuery, aggregateID).Scan(
 			&cartView.ID,
 			&cartView.UserID,
@@ -67,7 +67,7 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 			FROM cart_items 
 			WHERE cart_id = ?
 		`
-		
+
 		rows, err := tx.QueryContext(ctx, itemsQuery, aggregateID)
 		if err != nil {
 			return appErrors.QueryError.Wrap(err, "failed to get cart items")
@@ -97,7 +97,7 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 		cart = &cartView
 		return nil
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (c *CartReadModelImpl) Upsert(ctx context.Context, aggregateID string, view
 				purchased_at = VALUES(purchased_at),
 				version = VALUES(version)
 		`
-		
+
 		_, err = tx.ExecContext(ctx, cartQuery,
 			view.ID,
 			view.UserID,
@@ -153,7 +153,7 @@ func (c *CartReadModelImpl) Upsert(ctx context.Context, aggregateID string, view
 				INSERT INTO cart_items (id, cart_id, quantity, price)
 				VALUES (?, ?, ?, ?)
 			`
-			
+
 			for _, item := range view.Items {
 				_, err = tx.ExecContext(ctx, itemQuery,
 					item.ID,
