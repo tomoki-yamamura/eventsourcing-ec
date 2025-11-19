@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 )
 
 const (
@@ -18,23 +18,23 @@ const (
 )
 
 type OutboxPublisher struct {
-	tx            repository.Transaction
-	outboxRepo    repository.OutboxRepository
-	kafkaProducer *kafka.Producer
-	topicRouter   kafka.TopicRouter
+	tx              repository.Transaction
+	outboxRepo      repository.OutboxRepository
+	messageProducer messaging.MessageProducer
+	topicRouter     messaging.TopicRouter
 }
 
 func NewOutboxPublisher(
 	tx repository.Transaction,
 	outboxRepo repository.OutboxRepository,
-	kafkaProducer *kafka.Producer,
-	topicRouter kafka.TopicRouter,
-) *OutboxPublisher {
+	messageProducer messaging.MessageProducer,
+	topicRouter messaging.TopicRouter,
+) messaging.OutboxPublisher {
 	return &OutboxPublisher{
-		tx:            tx,
-		outboxRepo:    outboxRepo,
-		kafkaProducer: kafkaProducer,
-		topicRouter:   topicRouter,
+		tx:              tx,
+		outboxRepo:      outboxRepo,
+		messageProducer: messageProducer,
+		topicRouter:     topicRouter,
 	}
 }
 
@@ -77,13 +77,12 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 	var publishedEventIDs []uuid.UUID
 
 	for _, outboxEvent := range pendingEvents {
-		// Skip events that exceeded max retries
 		if outboxEvent.RetryCount >= DefaultMaxRetries {
 			log.Printf("Skipping event %s - max retries (%d) exceeded", outboxEvent.EventID, DefaultMaxRetries)
 			continue
 		}
 
-		message := &kafka.Message{
+		message := &messaging.Message{
 			ID:          outboxEvent.EventID,
 			Type:        outboxEvent.EventType,
 			Data:        json.RawMessage(outboxEvent.EventData),
@@ -92,19 +91,20 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 		}
 
 		topic := op.topicRouter.TopicFor(outboxEvent.EventType, outboxEvent.AggregateType)
-		if err := op.publishToKafka(topic, outboxEvent.AggregateID.String(), message); err != nil {
+		if err := op.publishMessage(topic, outboxEvent.AggregateID.String(), message); err != nil {
 			log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
 
-			// Mark failed and increment retry count in separate transactions
-			_ = op.tx.RWTx(ctx, func(ctx context.Context) error {
-				if err := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); err != nil {
-					log.Printf("Failed to mark event as failed: %v", err)
+			if txErr := op.tx.RWTx(ctx, func(ctx context.Context) error {
+				if markErr := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); markErr != nil {
+					log.Printf("Failed to mark event as failed: %v", markErr)
 				}
-				if err := op.outboxRepo.IncrementRetryCount(ctx, outboxEvent.EventID); err != nil {
-					log.Printf("Failed to increment retry count: %v", err)
+				if retryErr := op.outboxRepo.IncrementRetryCount(ctx, outboxEvent.EventID); retryErr != nil {
+					log.Printf("Failed to increment retry count: %v", retryErr)
 				}
 				return nil
-			})
+			}); txErr != nil {
+				log.Printf("Transaction failed while handling publish error for event %s: %v", outboxEvent.EventID, txErr)
+			}
 			continue
 		}
 
@@ -127,6 +127,6 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 	return nil
 }
 
-func (op *OutboxPublisher) publishToKafka(topic, key string, message *kafka.Message) error {
-	return op.kafkaProducer.PublishMessage(topic, key, message)
+func (op *OutboxPublisher) publishMessage(topic, key string, message *messaging.Message) error {
+	return op.messageProducer.PublishMessage(topic, key, message)
 }

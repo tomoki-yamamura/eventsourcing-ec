@@ -8,9 +8,10 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 )
 
-type MessageHandler func(context.Context, *Message) error
+type MessageHandler func(context.Context, *messaging.Message) error
 
 type ConsumerGroup struct {
 	brokers       []string
@@ -78,7 +79,7 @@ func (c *ConsumerGroup) Start(ctx context.Context) error {
 }
 
 func (c *ConsumerGroup) handleMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
-	var msg Message
+	var msg messaging.Message
 	if err := json.Unmarshal(message.Value, &msg); err != nil {
 		log.Printf("Failed to unmarshal message: %v", err)
 		return nil

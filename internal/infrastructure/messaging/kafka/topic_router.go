@@ -1,14 +1,12 @@
 package kafka
 
-type TopicRouter interface {
-	TopicFor(eventType string, aggregateType string) string
-}
+import "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 
 type StaticMapRouter struct {
 	aggregateTopicMap map[string]string
 }
 
-func NewStaticMapRouter() *StaticMapRouter {
+func NewStaticTopicRouter() messaging.TopicRouter {
 	return &StaticMapRouter{
 		aggregateTopicMap: map[string]string{
 			"Cart": "ec.cart-events",

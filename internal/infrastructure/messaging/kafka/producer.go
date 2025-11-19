@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/IBM/sarama"
-	"github.com/google/uuid"
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 )
 
 type Producer struct {
@@ -14,15 +14,8 @@ type Producer struct {
 	brokers  []string
 }
 
-type Message struct {
-	ID          uuid.UUID   `json:"id"`
-	Type        string      `json:"type"`
-	Data        interface{} `json:"data"`
-	AggregateID uuid.UUID   `json:"aggregate_id"`
-	Version     int         `json:"version"`
-}
 
-func NewProducer(brokers []string) (*Producer, error) {
+func NewProducer(brokers []string) (messaging.MessageProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -39,7 +32,7 @@ func NewProducer(brokers []string) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) PublishMessage(topic string, key string, message *Message) error {
+func (p *Producer) PublishMessage(topic string, key string, message *messaging.Message) error {
 	messageBytes, err := json.Marshal(message)
 	if err != nil {
 		return appErrors.Unknown.Wrap(err, "failed to serialize message")
