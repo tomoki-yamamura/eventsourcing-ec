@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 )
@@ -58,7 +59,7 @@ func (op *OutboxPublisher) Start(ctx context.Context) error {
 }
 
 func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
-	var pendingEvents []repository.OutboxEvent
+	var pendingEvents []event.OutboxEvent
 	err := op.tx.RWTx(ctx, func(ctx context.Context) error {
 		var err error
 		pendingEvents, err = op.outboxRepo.GetPendingEvents(ctx, DefaultBatchSize)

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/value"
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 )
@@ -53,7 +54,7 @@ func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.
 			eventData,
 			evt.GetVersion(),
 			time.Now(),
-			repository.OutboxStatusPending,
+			value.OutboxStatusPending,
 		)
 		if err != nil {
 			return appErrors.RepositoryError.Wrap(err, "failed to save event to outbox")
@@ -63,7 +64,7 @@ func (o *outboxRepositoryImpl) SaveEvents(ctx context.Context, aggregateID uuid.
 	return nil
 }
 
-func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) ([]repository.OutboxEvent, error) {
+func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) ([]event.OutboxEvent, error) {
 	tx, err := transaction.GetTx(ctx)
 	if err != nil {
 		return nil, err
@@ -78,30 +79,30 @@ func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) 
 		LIMIT ?
 	`
 
-	rows, err := tx.QueryContext(ctx, query, repository.OutboxStatusPending, limit)
+	rows, err := tx.QueryContext(ctx, query, value.OutboxStatusPending, limit)
 	if err != nil {
 		return nil, appErrors.QueryError.Wrap(err, "failed to get pending events")
 	}
 	defer rows.Close()
 
-	var events []repository.OutboxEvent
+	var events []event.OutboxEvent
 	for rows.Next() {
-		var event repository.OutboxEvent
+		var outboxEvent event.OutboxEvent
 		var publishedAt sql.NullTime
 		var errorMessage sql.NullString
 
 		err := rows.Scan(
-			&event.ID,
-			&event.EventID,
-			&event.AggregateID,
-			&event.AggregateType,
-			&event.EventType,
-			&event.EventData,
-			&event.Version,
-			&event.CreatedAt,
+			&outboxEvent.ID,
+			&outboxEvent.EventID,
+			&outboxEvent.AggregateID,
+			&outboxEvent.AggregateType,
+			&outboxEvent.EventType,
+			&outboxEvent.EventData,
+			&outboxEvent.Version,
+			&outboxEvent.CreatedAt,
 			&publishedAt,
-			&event.Status,
-			&event.RetryCount,
+			&outboxEvent.Status,
+			&outboxEvent.RetryCount,
 			&errorMessage,
 		)
 		if err != nil {
@@ -109,13 +110,13 @@ func (o *outboxRepositoryImpl) GetPendingEvents(ctx context.Context, limit int) 
 		}
 
 		if publishedAt.Valid {
-			event.PublishedAt = &publishedAt.Time
+			outboxEvent.PublishedAt = &publishedAt.Time
 		}
 		if errorMessage.Valid {
-			event.ErrorMessage = &errorMessage.String
+			outboxEvent.ErrorMessage = &errorMessage.String
 		}
 
-		events = append(events, event)
+		events = append(events, outboxEvent)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -137,7 +138,7 @@ func (o *outboxRepositoryImpl) MarkAsPublished(ctx context.Context, eventIDs []u
 
 	placeholders := make([]string, len(eventIDs))
 	args := make([]any, len(eventIDs)+2)
-	args[0] = repository.OutboxStatusPublished
+	args[0] = value.OutboxStatusPublished
 	args[1] = time.Now()
 
 	for i, eventID := range eventIDs {
@@ -171,7 +172,7 @@ func (o *outboxRepositoryImpl) MarkAsFailed(ctx context.Context, eventID uuid.UU
 		WHERE event_id = ?
 	`
 
-	_, err = tx.ExecContext(ctx, query, repository.OutboxStatusFailed, errorMessage, eventID)
+	_, err = tx.ExecContext(ctx, query, value.OutboxStatusFailed, errorMessage, eventID)
 	if err != nil {
 		return appErrors.RepositoryError.Wrap(err, "failed to mark event as failed")
 	}
