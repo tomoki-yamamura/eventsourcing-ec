@@ -15,7 +15,6 @@ import (
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore"
 )
 
 type Container struct {
@@ -29,9 +28,7 @@ type Container struct {
 	Deserializer repository.EventDeserializer
 
 	// Gateway implementation
-	EventBus      gateway.EventBus
-	TodoProjector gateway.Projector
-	TodoViewRepo  readmodelstore.TodoListStore
+	EventBus gateway.EventBus
 
 	// Messaging (interfaces only)
 	OutboxPublisher messaging.OutboxPublisher

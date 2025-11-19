@@ -11,9 +11,6 @@ import (
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/container"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/command"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/handler/query"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/router"
 )
 
 func main() {
@@ -35,10 +32,6 @@ func main() {
 		log.Fatalf("Failed to inject dependencies: %v", err)
 	}
 
-	if err := cont.TodoProjector.Start(ctx, cont.EventBus); err != nil {
-		log.Fatalf("Failed to start projector: %v", err)
-	}
-
 	// Start background workers
 	go func() {
 		if err := cont.OutboxPublisher.Start(ctx); err != nil {
@@ -47,14 +40,11 @@ func main() {
 	}()
 	log.Println("Background workers started successfully")
 
-	// Handler layer setup (CQRS)
-	createCommandHandler := command.NewTodoListCreateCommandHandler(cont.TodoListCreateCommand)
-	addCommandHandler := command.NewTodoAddItemCommandHandler(cont.TodoAddItemCommand)
-	queryHandler := query.NewTodoListQueryHandler(cont.QueryUseCase)
+	// Handler layer setup (CQRS) - Cart only for now
+	// TODO: Add cart handlers when implemented
 
-	// Router setup
-	appRouter := router.NewRouter(createCommandHandler, addCommandHandler, queryHandler)
-	mux := appRouter.SetupRoutes()
+	// Router setup - minimal for now
+	mux := http.NewServeMux()
 
 	// Setup graceful shutdown
 	c := make(chan os.Signal, 1)

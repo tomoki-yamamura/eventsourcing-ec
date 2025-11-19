@@ -41,16 +41,9 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 
 	for attempt := range maxRetries {
 		err = u.tx.RWTx(ctx, func(ctx context.Context) error {
-			var cartUUID uuid.UUID
-			var err error
-
-			if input.CartID == "" {
-				cartUUID = uuid.New()
-			} else {
-				cartUUID, err = uuid.Parse(input.CartID)
-				if err != nil {
-					return err
-				}
+			cartUUID, err := uuid.Parse(input.CartID)
+			if err != nil {
+				return err
 			}
 
 			userUUID, err := uuid.Parse(input.UserID)
