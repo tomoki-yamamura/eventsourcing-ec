@@ -2,7 +2,6 @@ package cart
 
 import (
 	"context"
-	"time"
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"

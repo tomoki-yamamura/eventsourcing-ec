@@ -23,6 +23,11 @@ func NewEventDeserializer() repository.EventDeserializer {
 
 	registry.register(NewTodoListCreatedEventDeserializer())
 	registry.register(NewTodoAddedEventDeserializer())
+	
+	// Cart events
+	registry.register(NewCartCreatedEventDeserializer())
+	registry.register(NewItemAddedToCartEventDeserializer())
+	registry.register(NewCartPurchasedEventDeserializer())
 
 	return registry
 }
