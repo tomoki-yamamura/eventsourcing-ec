@@ -12,8 +12,11 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 	outboxPublisher "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/outbox"
+	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/readmodel/cart"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore"
+	queryUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
 )
 
 type Container struct {
@@ -29,8 +32,12 @@ type Container struct {
 	// Messaging (interfaces only)
 	OutboxPublisher messaging.OutboxPublisher
 
+	// Read model
+	CartStore readmodelstore.CartStore
+
 	// Use case layer (CQRS)
 	CartAddItemCommand commandUseCase.CartAddItemCommandInterface
+	GetCartQuery       queryUseCase.GetCartQueryInterface
 }
 
 func NewContainer() *Container {
@@ -63,6 +70,10 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	)
 
 	c.CartAddItemCommand = commandUseCase.NewCartAddItemCommand(c.Transaction, c.EventStore, c.OutboxRepo)
+
+	// Read model and queries
+	c.CartStore = cartReadModel.NewCartReadModel(c.Transaction)
+	c.GetCartQuery = queryUseCase.NewGetCartQuery(c.CartStore)
 
 	return nil
 }
