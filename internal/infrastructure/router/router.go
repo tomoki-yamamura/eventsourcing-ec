@@ -21,7 +21,7 @@ func NewRouter(cartAddItemHandler *command.CartAddItemCommandHandler, getCartHan
 func (r *Router) SetupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/additem/{aggregate_id}", r.cartAddItemHandler.AddItemToCart).Methods("POST")
+	router.HandleFunc("/carts/{aggregate_id}/items", r.cartAddItemHandler.AddItemToCart).Methods("POST")
 	router.HandleFunc("/carts/{aggregate_id}", r.getCartHandler.GetCart).Methods("GET")
 
 	return router
