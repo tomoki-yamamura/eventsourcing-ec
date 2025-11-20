@@ -45,13 +45,11 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 		return err
 	}
 
-	// Repository layer
 	c.Transaction = transaction.NewTransaction(databaseClient.GetDB())
 	c.Deserializer = deserializer.NewEventDeserializer()
 	c.EventStore = eventstore.NewEventStore(c.Deserializer)
 	c.OutboxRepo = outboxRepo.NewOutboxRepository()
 
-	// Messaging layer
 	messageProducer, err := kafka.NewProducer(cfg.KafkaConfig.Brokers)
 	if err != nil {
 		return err
@@ -64,7 +62,6 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 		topicRouter,
 	)
 
-	// Use case layer (CQRS)
 	c.CartAddItemCommand = commandUseCase.NewCartAddItemCommand(c.Transaction, c.EventStore, c.OutboxRepo)
 
 	return nil
