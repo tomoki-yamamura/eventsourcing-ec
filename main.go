@@ -11,6 +11,7 @@ import (
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/container"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/register"
 )
 
 func main() {
@@ -40,11 +41,10 @@ func main() {
 	}()
 	log.Println("Background workers started successfully")
 
-	// Handler layer setup (CQRS) - Cart only for now
-	// TODO: Add cart handlers when implemented
-
-	// Router setup - minimal for now
-	mux := http.NewServeMux()
+	// Setup handlers and router
+	handlerRegister := register.NewHandlerRegister(cont)
+	appRouter := handlerRegister.SetupRouter()
+	mux := appRouter.SetupRoutes()
 
 	// Setup graceful shutdown
 	c := make(chan os.Signal, 1)
