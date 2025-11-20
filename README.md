@@ -1,333 +1,224 @@
-# Event Sourcing Todo Application
+# Event Sourcing E-Commerce Application
 
-This is a Todo application built using **Event Sourcing** architecture in Go.
-It demonstrates Domain-Driven Design (DDD) principles, implementing CQRS pattern for command and query separation.
-
----
-
-## Tech Stack
-
-This project uses the following core technologies:
-
-- [golang](https://go.dev/)
-- [gorilla/mux](https://github.com/gorilla/mux) - HTTP router
-- [goose](https://github.com/pressly/goose) - Database migration tool
-- [MySQL](https://www.mysql.com/) - Event store database
-- [Docker](https://www.docker.com/) - Containerization
+This is an **Event Sourcing** e-commerce application built in Go, implementing a Cart aggregate for shopping cart management. It demonstrates Domain-Driven Design (DDD) principles, CQRS pattern, and Event Sourcing architecture with MySQL as both Event Store and Read Model storage, plus Kafka for messaging.
 
 ---
 
 ## Architecture
 
-The application follows **Clean Architecture** principles with the following layers:
+The application follows **Clean Architecture** principles with Event Sourcing:
 
-- **Domain Layer**: Aggregates, Value Objects, Commands, Events, and Repository interfaces
-- **UseCase Layer**: Business logic, application services, and port interfaces
-- **Infrastructure Layer**: Database implementations, HTTP handlers, presenters, views, and external integrations
-
-### Clean Architecture Pattern
-
-- **Ports & Adapters**: Clear separation between business logic and external concerns
-- **Presenter Pattern**: UseCase outputs to Presenter interfaces, maintaining dependency inversion
-- **View Layer**: HTTP response rendering separated from presentation logic
+- **Domain Layer**: Cart aggregate, Value Objects (Price, Quantity), Commands, Events
+- **UseCase Layer**: CQRS command/query handlers, business logic
+- **Infrastructure Layer**: Event store, Read model projectors, HTTP handlers, Kafka messaging
+- **Messaging**: Outbox pattern for reliable event delivery between Event Store and Kafka
 
 ### Event Sourcing Components
 
-- **Aggregates**: TodoListAggregate manages todo list state through events
-- **Events**: TodoListCreatedEvent, TodoAddedEvent capture state changes
-- **Event Store**: Persists events with optimistic locking for concurrency control
-- **Read Models**: Separate query models for retrieving todo lists
+- **Cart Aggregate**: Manages shopping cart state through events (CartCreated, ItemAddedToCart, CartPurchased)
+- **Event Store**: MySQL-based event persistence with optimistic locking
+- **Read Models**: Separate cart views for querying (carts and cart_items tables)
+- **Outbox Pattern**: Ensures reliable event publishing to Kafka
+- **KRaft Mode**: Modern Kafka without ZooKeeper dependency
 
 ---
 
-### Key Features
+## Quick Start
 
-- **Value Objects**: UserID and TodoText with built-in validation
-- **Clean Architecture**: Strict separation of domain, use case, and infrastructure
-- **Event Sourcing**: All state changes captured as immutable events
-- **CQRS**: Command and query responsibility segregation
-- **Domain Rules**: Business logic like "max 3 todos per day" enforced in domain layer
-- **Optimistic Locking**: Prevents concurrent modification conflicts
-- **Transaction Management**: Flexible transaction control with retry logic
+### Prerequisites
+
+- `direnv` - Environment variable management
+- `docker` and `docker-compose` - Container orchestration
+- `go` 1.24+ - Go programming language
+- `task` - Task automation tool
+
+### Installation
+
+1. **Install Task (if not already installed):**
+
+   ```bash
+   # macOS
+   brew install go-task/tap/go-task
+
+   # Linux/Others
+   sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+   ```
+
+2. **Start infrastructure (Kafka + MySQL):**
+
+   ```bash
+   task docker:up
+   ```
+
+3. **Run database migrations:**
+
+   ```bash
+   task migrate:up
+   task migrate:test:up
+   ```
+
+4. **Verify setup:**
+
+   ```bash
+   task test
+   ```
+
+5. **Start the application:**
+   ```bash
+   task run
+   ```
 
 ---
 
-## Requirements
+## Available Tasks
 
-- `direnv`
-- `docker` and `docker-compose`
-- `go` 1.21+
+### Development
 
----
+- `task test` - Run all tests
+- `task lint` - Run code linting
+- `task build` - Build application
+- `task run` - Run the application
 
-## Environment Setup
+### Docker
 
-Install task:
+- `task docker:up` - Start Kafka + MySQL containers
+- `task docker:down` - Stop containers and remove volumes
 
-```bash
-brew install go-task/tap/go-task
-```
+### Database Migrations
 
-or
+#### Event Store Migrations
 
-```bash
-sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-```
+- `task migrate:eventstore:up` - Run event store migrations
+- `task migrate:eventstore:down` - Rollback event store migrations
+- `task migrate:eventstore:status` - Check migration status
+- `task migrate:eventstore:create -- migration_name` - Create new migration
 
-Copy the example env file:
+#### Read Model (Projector) Migrations
 
-```bash
-cp .envrc.example .envrc
-```
+- `task migrate:projector:up` - Run read model migrations
+- `task migrate:projector:down` - Rollback read model migrations
+- `task migrate:projector:status` - Check migration status
+- `task migrate:projector:create -- migration_name` - Create new migration
 
-Set up direnv:
+#### Combined Commands
 
-```bash
-direnv allow
-```
-
-Start MySQL database:
-
-```bash
-task docker:up
-```
-
-Wait for MySQL to be ready, then run database migrations:
-
-```bash
-task migrate:up
-```
-
-Create test database and grant permissions:
-
-```bash
-mysql -h 127.0.0.1 -P 23306 -u root -p${MYSQL_ROOT_PASSWORD} \
-  -e "CREATE DATABASE IF NOT EXISTS event_test; GRANT ALL PRIVILEGES ON event_test.* TO 'test'@'%'; FLUSH PRIVILEGES;"
-```
-
-Setup test database with migrations:
-
-```bash
-task migrate:test:up
-```
-
-Verify everything is working by running tests:
-
-```bash
-task test
-```
+- `task migrate:up` - Run all migrations (eventstore + projector)
+- `task migrate:down` - Rollback all migrations
+- `task migrate:test:up` - Run all migrations for test database
 
 ---
 
 ## API Endpoints
 
-The application exposes RESTful APIs for managing todo lists:
+The application provides RESTful APIs for cart management:
 
-### Create Todo List
+### Add Item to Cart
 
 ```bash
-POST /todo-lists
+POST /additem/{aggregate_id}
 ```
 
-Request body:
+**Request body:**
 
 ```json
 {
-  "user_id": "user123"
+  "user_id": "user-123",
+  "item_id": "item-456",
+  "quantity": 2,
+  "price": 29.99
 }
 ```
 
-### Add Todo Item
+**Example:**
 
 ```bash
-POST /todo-lists/{aggregate_id}/items
+curl -X POST "http://localhost:8080/additem/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user-123",
+    "item_id": "item-456",
+    "quantity": 2,
+    "price": 29.99
+  }'
 ```
 
-Request body:
+**Response:**
 
 ```json
 {
-  "user_id": "user123",
-  "text": "Learn Event Sourcing"
+  "aggregate_id": "550e8400-e29b-41d4-a716-446655440000",
+  "version": 2,
+  "events": [
+    {
+      "type": "ItemAddedToCart",
+      "version": 2,
+      "occurred_at": "2025-11-20T16:30:00Z"
+    }
+  ],
+  "status": "success",
+  "executed_at": "2025-11-20T16:30:00Z"
 }
-```
-
-### Get Todo List
-
-```bash
-GET /todo-lists/{aggregate_id}/items
 ```
 
 ---
 
-## Run Application
+## Database Schema
 
-Start the API server:
+### Event Store Tables
 
-```bash
-task run
+**events** - Stores all domain events
+
+```sql
+CREATE TABLE events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id CHAR(36) NOT NULL UNIQUE,
+    aggregate_id CHAR(36) NOT NULL,
+    aggregate_type VARCHAR(50) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    event_data JSON NOT NULL,
+    version INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_aggregate_version (aggregate_id, version)
+);
 ```
 
-Once running, test the API:
+**outbox** - Outbox pattern for reliable messaging
 
-1. Create a new todo list:
-
-```bash
-curl -X POST "http://localhost:8080/todo-lists" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "user123"}'
+```sql
+CREATE TABLE outbox (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id CHAR(36) NOT NULL,
+    aggregate_id CHAR(36) NOT NULL,
+    aggregate_type VARCHAR(50) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    event_data JSON NOT NULL,
+    version INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP NULL,
+    status ENUM('PENDING', 'PUBLISHED', 'FAILED') DEFAULT 'PENDING',
+    retry_count INT DEFAULT 0,
+    error_message TEXT NULL
+);
 ```
-
-2. Add a todo item (replace {aggregate_id} with the ID from step 1):
-
-```bash
-curl -X POST "http://localhost:8080/todo-lists/{aggregate_id}/items" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "user123", "text": "Learn Event Sourcing"}'
-```
-
-3. Get todo list:
-
-```bash
-curl -X GET "http://localhost:8080/todo-lists/{aggregate_id}/items"
-```
-
----
 
 ## Testing
 
-Run tests:
+Run the test suite:
 
 ```bash
+# Run all tests
 task test
+
+# Run specific test packages
+go test ./internal/domain/...
+go test ./internal/usecase/...
+go test ./internal/infrastructure/...
 ```
+
+The application includes:
+
+- **Unit tests** for domain logic, value objects, aggregates
+- **Integration tests** for event store, database operations
+- **Test database** setup with dedicated migration support
 
 ---
-
-## Development
-
-### Code Quality
-
-Run linting:
-
-```bash
-task lint
-```
-
----
-
-## Project Structure
-
-```
-.
-├── main.go                              # Application entry point
-├── Taskfile.yaml                        # Task automation (build, test, migration)
-├── docker-compose.yaml                  # MySQL database setup
-├── .envrc.example                       # Environment configuration template
-├── go.mod                               # Go module dependencies
-├── container/                           # Dependency injection container
-│   └── container.go                     # DI container implementation
-├── docker/                              # Docker configuration files
-└── internal/                            # Private application code
-    ├── config/                          # Configuration management
-    │   └── config.go                    # Application configuration
-    ├── domain/                          # Domain layer (business logic)
-    │   ├── aggregate/                   # Domain aggregates
-    │   │   ├── todo_list.go             # TodoListAggregate implementation
-    │   │   └── todo_list_test.go        # Aggregate unit tests
-    │   ├── command/                     # Domain commands
-    │   │   ├── create_todo_list_command.go
-    │   │   └── add_todo_command.go
-    │   ├── entity/                      # Domain entities
-    │   │   └── todo_item.go             # TodoItem entity
-    │   ├── event/                       # Domain events
-    │   │   ├── event.go                 # Event interface
-    │   │   ├── todo_list_created_event.go
-    │   │   └── todo_added_event.go
-    │   ├── repository/                  # Repository interfaces
-    │   │   ├── event_store.go           # Event store interface
-    │   │   ├── event_deserializer.go    # Event deserializer interface
-    │   │   └── transaction.go           # Transaction interface
-    │   └── value/                       # Value objects
-    │       ├── user_id.go               # UserID value object with validation
-    │       ├── user_id_test.go          # UserID tests
-    │       ├── todo_text.go             # TodoText value object with validation
-    │       ├── todo_text_test.go        # TodoText tests
-    │       └── aggregate_id.go          # AggregateID value object
-    ├── usecase/                         # Application layer (CQRS use cases)
-    │   ├── command/                     # Command side (write operations)
-    │   │   ├── input/                   # Command input models
-    │   │   │   ├── create_todo_list_input.go
-    │   │   │   └── add_todo_input.go
-    │   │   ├── todo_list_create_command.go  # TodoList creation command
-    │   │   └── todo_add_item_command.go     # TodoItem addition command
-    │   ├── query/                       # Query side (read operations)
-    │   │   ├── dto/                     # Data Transfer Objects
-    │   │   │   └── todo_list_view_dto.go # TodoList view DTOs
-    │   │   ├── input/                   # Query input models
-    │   │   │   └── get_todo_list_input.go
-    │   │   ├── output/                  # Query output models
-    │   │   │   └── get_todo_list_output.go
-    │   │   └── todo_list_query.go       # TodoList query implementation
-    │   ├── ports/                       # Port interfaces (Clean Architecture)
-    │   │   ├── gateway/                 # Gateway interfaces (external systems)
-    │   │   │   ├── eventbus.go          # Event bus interfaces
-    │   │   │   └── projector.go         # Projector interface
-    │   │   ├── presenter/               # Presenter interfaces (output ports)
-    │   │   │   └── todo_list_presenter.go # TodoList presenter interface
-    │   │   └── readmodelstore/          # Read model store interfaces
-    │   │       ├── todo_list_query.go   # Read model store interface
-    │   │       └── dto/                 # Read model DTOs
-    │   │           └── todo_list_view_dto.go
-    │   └── readmodelstore/              # Read model store interface definitions
-    │       └── todo_list_query.go       # Read model store interface
-    └── infrastructure/                  # Infrastructure layer
-        ├── bus/                         # Event bus implementation
-        │   └── eventbus.go              # In-memory event bus
-        ├── database/                    # Database implementations
-        │   ├── client/                  # Database client implementation
-        │   │   └── client.go            # MySQL client
-        │   ├── eventstore/              # Event store implementation
-        │   │   ├── event_store_impl.go  # EventStore implementation
-        │   │   ├── event_store_impl_test.go # EventStore integration tests
-        │   │   ├── migration/           # Database migration files
-        │   │   └── deserializer/        # Event deserializers
-        │   │       ├── event_deserializer_impl.go
-        │   │       ├── todo_list_created_deserializer.go
-        │   │       └── todo_added_deserializer.go
-        │   ├── transaction/             # Transaction management
-        │   │   └── transaction.go       # Transaction implementation
-        │   └── testutil/                # Database test utilities
-        │       └── setup_test_db.go     # Test database setup
-        ├── projector/                   # Read model projectors
-        │   └── todo/                    # Todo-specific projector
-        │       ├── todo_projector.go    # Todo projector implementation
-        │       ├── todo_projector_test.go # Projector unit tests
-        │       ├── inmemory_repository.go # In-memory read model repository
-        │       └── inmemory_repository_test.go # Repository unit tests
-        ├── presenter/                   # Presenter layer (Clean Architecture)
-        │   ├── viewmodel/               # View models for presentation
-        │   │   └── todo_list_view_model.go # TodoList view model
-        │   ├── view.go                  # View interface definition
-        │   └── todo_presenter_impl.go   # TodoList presenter implementation
-        ├── view/                        # View implementations
-        │   └── todo_list_view_http.go   # HTTP view implementation
-        ├── handler/                     # HTTP handlers (separated by responsibility)
-        │   ├── command/                 # Command handlers (write operations)
-        │   │   ├── todo_list_create_command_handler.go  # TodoList creation
-        │   │   └── todo_add_item_command_handler.go     # TodoItem addition
-        │   ├── query/                   # Query handlers (read operations)
-        │   │   └── todo_list_query_handler.go           # TodoList queries
-        │   ├── request/                 # HTTP request models
-        │   │   └── todo_request.go
-        │   └── response/                # HTTP response models
-        │       └── todo_response.go
-        └── router/                      # HTTP routing configuration
-            └── router.go                # Router setup with separated handlers
-```
-
----
-
-## License
-
-This project is for educational purposes demonstrating Event Sourcing patterns in Go.

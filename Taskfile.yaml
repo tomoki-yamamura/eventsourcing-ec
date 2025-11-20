@@ -1,6 +1,21 @@
 version: "3"
 
 tasks:
+  docker:up:
+    desc: Start Docker containers (DB etc.)
+    cmds:
+      - docker-compose up -d
+
+  docker:down:
+    desc: Stop Docker containers and remove volumes
+    cmds:
+      - docker-compose down -v
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test ./... -v
+
   lint:
     desc: Run golangci-lint
     cmds:
@@ -9,53 +24,99 @@ tasks:
       - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
       - golangci-lint run ./... --timeout=5m
 
-  test:
-    desc: Run all tests
+  build:
+    desc: Build the application
     cmds:
-      - go test ./... -v
+      - go build -o bin/app ./main.go
 
-  docker:up:
-    desc: Start Docker containers (DB etc.)
-    dir: ./docker
+  run:
+    desc: Run the application
+    deps: [build]
     cmds:
-      - docker compose up -d
+      - ./bin/app
 
-  docker:down:
-    desc: Stop Docker containers and remove volumes
-    dir: ./docker
-    cmds:
-      - docker compose down -v
-
-  migrate:up:
-    desc: Run DB migrations using goose
+  # Event Store Migrations
+  migrate:eventstore:up:
+    desc: Run event store migrations up
     cmds:
       - |
         goose -dir internal/infrastructure/database/eventstore/migration mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" up
 
-  migrate:down:
-    desc: Rollback last DB migration using goose
+  migrate:eventstore:down:
+    desc: Run event store migrations down
     cmds:
       - |
         goose -dir internal/infrastructure/database/eventstore/migration mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
 
-  migrate:test:up:
-    desc: Run DB migrations for test database
+  migrate:eventstore:status:
+    desc: Check event store migration status
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/eventstore/migration mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
+
+  migrate:eventstore:create:
+    desc: Create new event store migration (usage{{":"}} task migrate{{":"}}eventstore{{":"}}create -- migration_name)
+    cmds:
+      - goose -dir internal/infrastructure/database/eventstore/migration create {{.CLI_ARGS}} sql
+
+  migrate:projector:up:
+    desc: Run projector migrations up
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/projector/migration mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" up
+
+  migrate:projector:down:
+    desc: Run projector migrations down
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/projector/migration mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
+
+  migrate:projector:status:
+    desc: Check projector migration status
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/projector/migration mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
+
+  migrate:projector:create:
+    desc: Create new projector migration (usage{{":"}} task migrate{{":"}}projector{{":"}}create -- migration_name)
+    cmds:
+      - goose -dir internal/infrastructure/database/projector/migration create {{.CLI_ARGS}} sql
+
+  # Test Database Migrations
+  migrate:test:eventstore:up:
+    desc: Run event store migrations up for test database
     cmds:
       - |
         goose -dir internal/infrastructure/database/eventstore/migration mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
-  migrate:test:down:
-    desc: Rollback test database migrations
+  migrate:test:projector:up:
+    desc: Run projector migrations up for test database
     cmds:
       - |
-        goose -dir internal/infrastructure/database/eventstore/migration mysql \
-        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" down
+        goose -dir internal/infrastructure/database/projector/migration mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
+
+  migrate:up:
+    desc: Run all migrations up (both eventstore and projector)
+    deps: [migrate:eventstore:up, migrate:projector:up]
+
+  migrate:down:
+    desc: Run all migrations down (both eventstore and projector) 
+    deps: [migrate:projector:down, migrate:eventstore:down]
+
+  migrate:test:up:
+    desc: Run all migrations up for test database
+    deps: [migrate:test:eventstore:up, migrate:test:projector:up]
 
   db:setup:
-    desc: Setup both main and test databases with migrations (assumes test user has been granted permissions)
+    desc: Setup both main and test databases with migrations
     cmds:
       - task: migrate:up
       - task: migrate:test:up
