@@ -21,6 +21,11 @@ services:
       CLUSTER_ID: ${CLUSTER_ID}
     volumes:
       - kafka_data:/tmp/kraft-combined-logs
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Kafka Topic Initialization
   init-topics:
@@ -30,6 +35,34 @@ services:
     entrypoint: ["/bin/bash", "-c", "/init-topics.sh"]
     volumes:
       - ./init-topics.sh:/init-topics.sh
+
+  # ksqlDB Server
+  ksqldb-server:
+    image: confluentinc/ksqldb-server:latest
+    hostname: ksqldb-server
+    container_name: ksqldb-server
+    depends_on:
+      - kafka
+    ports:
+      - "8088:8088"
+    restart: unless-stopped
+    environment:
+      KSQL_CONFIG_DIR: "/etc/ksql"
+      KSQL_BOOTSTRAP_SERVERS: "kafka:19092"
+      KSQL_HOST_NAME: ksqldb-server
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: ""
+      KSQL_AUTO_OFFSET_RESET: "earliest"
+
+  # ksqlDB CLI
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:latest
+    container_name: ksqldb-cli
+    depends_on:
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
 
   # MySQL - Read Model Store
   mysql:
