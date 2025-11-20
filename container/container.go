@@ -13,7 +13,6 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 	outboxPublisher "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/outbox"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 )
 
@@ -26,9 +25,6 @@ type Container struct {
 	EventStore   repository.EventStore
 	OutboxRepo   repository.OutboxRepository
 	Deserializer repository.EventDeserializer
-
-	// Gateway implementation
-	EventBus gateway.EventBus
 
 	// Messaging (interfaces only)
 	OutboxPublisher messaging.OutboxPublisher

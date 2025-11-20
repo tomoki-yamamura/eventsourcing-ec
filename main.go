@@ -11,6 +11,7 @@ import (
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/container"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
+	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/register"
 )
 
@@ -39,6 +40,19 @@ func main() {
 			log.Printf("Outbox publisher stopped: %v", err)
 		}
 	}()
+
+	// Start projector service
+	go func() {
+		projService, err := projectorService.NewProjectorService(cfg)
+		if err != nil {
+			log.Printf("Failed to create projector service: %v", err)
+			return
+		}
+		if err := projService.Start(ctx); err != nil {
+			log.Printf("Projector service stopped: %v", err)
+		}
+	}()
+
 	log.Println("Background workers started successfully")
 
 	// Setup handlers and router

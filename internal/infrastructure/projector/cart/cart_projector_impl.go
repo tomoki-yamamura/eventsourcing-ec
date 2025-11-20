@@ -30,7 +30,7 @@ func (p *CartProjectorImpl) Handle(ctx context.Context, e event.Event) error {
 	p.seen[eventID] = struct{}{}
 
 	switch e.(type) {
-	case event.CartCreatedEvent, event.ItemAddedToCartEvent, event.CartPurchasedEvent:
+	case *event.CartCreatedEvent, *event.ItemAddedToCartEvent, *event.CartPurchasedEvent:
 		aggID := e.GetAggregateID().String()
 
 		current, err := p.viewRepo.Get(ctx, aggID)
@@ -60,7 +60,7 @@ func (p *CartProjectorImpl) Start(ctx context.Context, bus gateway.EventSubscrib
 
 func (p *CartProjectorImpl) applyToView(view *dto.CartViewDTO, e event.Event) *dto.CartViewDTO {
 	switch evt := e.(type) {
-	case event.CartCreatedEvent:
+	case *event.CartCreatedEvent:
 		return &dto.CartViewDTO{
 			ID:          evt.GetAggregateID().String(),
 			UserID:      evt.UserID.String(),
@@ -72,7 +72,7 @@ func (p *CartProjectorImpl) applyToView(view *dto.CartViewDTO, e event.Event) *d
 			UpdatedAt:   evt.GetTimestamp(),
 			Version:     evt.GetVersion(),
 		}
-	case event.ItemAddedToCartEvent:
+	case *event.ItemAddedToCartEvent:
 		if view == nil {
 			return nil
 		}
@@ -117,7 +117,7 @@ func (p *CartProjectorImpl) applyToView(view *dto.CartViewDTO, e event.Event) *d
 			PurchasedAt: view.PurchasedAt,
 			Version:     evt.GetVersion(),
 		}
-	case event.CartPurchasedEvent:
+	case *event.CartPurchasedEvent:
 		if view == nil {
 			return nil
 		}
