@@ -3,7 +3,7 @@
 CREATE TABLE carts (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,
-    status ENUM('OPEN', 'CLOSED') NOT NULL DEFAULT 'OPEN',
+    status ENUM('OPEN', 'SUBMITTED', 'CLOSED', 'ABANDONED') NOT NULL DEFAULT 'OPEN',
     total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.0,
     item_count INT NOT NULL DEFAULT 0,
     purchased_at TIMESTAMP NULL,

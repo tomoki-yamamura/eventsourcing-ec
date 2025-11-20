@@ -18,6 +18,7 @@ type CartStatus string
 
 const (
 	CartStatusOpen      CartStatus = "OPEN"
+	CartStatusSubmitted CartStatus = "SUBMITTED"
 	CartStatusClosed    CartStatus = "CLOSED"
 	CartStatusAbandoned CartStatus = "ABANDONED"
 )
@@ -61,7 +62,7 @@ func (a *CartAggregate) isNew() bool {
 }
 
 func (a *CartAggregate) isCartAvailable() bool {
-	return a.status != CartStatusClosed
+	return a.status != CartStatusSubmitted && a.status != CartStatusClosed
 }
 
 func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCommand) error {
@@ -110,6 +111,28 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 	a.version++
 	evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, quantity.Int(), price.Float64())
 	a.uncommittedEvents = append(a.uncommittedEvents, evt)
+
+	return nil
+}
+
+func (a *CartAggregate) ExecuteSubmitCartCommand(cmd command.SubmitCartCommand) error {
+	if a.isNew() {
+		return errors.UnpermittedOp.New("cannot submit empty cart")
+	}
+
+	if !a.isCartAvailable() {
+		return ErrCartClosed
+	}
+
+	if len(a.items) == 0 {
+		return errors.UnpermittedOp.New("cannot submit empty cart")
+	}
+
+	a.version++
+	totalAmount := a.GetTotalAmount()
+	evt := event.NewCartSubmittedEvent(a.aggregateID, a.version, totalAmount.Float64())
+	a.uncommittedEvents = append(a.uncommittedEvents, evt)
+	a.status = CartStatusSubmitted
 
 	return nil
 }
@@ -169,6 +192,9 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 				cartItem := entity.NewCartItem(e.GetItemID(), quantity, price)
 				a.items = append(a.items, cartItem)
 			}
+			a.version = e.GetVersion()
+		case *event.CartSubmittedEvent:
+			a.status = CartStatusSubmitted
 			a.version = e.GetVersion()
 		case *event.CartPurchasedEvent:
 			a.status = CartStatusClosed
