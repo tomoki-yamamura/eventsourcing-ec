@@ -146,27 +146,6 @@ func (a *CartAggregate) GetTotalAmount() value.Price {
 	return totalPrice
 }
 
-func (a *CartAggregate) ExecutePurchaseCartCommand() error {
-	if a.isNew() {
-		return errors.UnpermittedOp.New("cannot purchase empty cart")
-	}
-
-	if !a.isCartAvailable() {
-		return ErrCartClosed
-	}
-
-	if len(a.items) == 0 {
-		return errors.UnpermittedOp.New("cannot purchase empty cart")
-	}
-
-	a.version++
-	totalAmount := a.GetTotalAmount()
-	evt := event.NewCartPurchasedEvent(a.aggregateID, a.version, totalAmount.Float64())
-	a.uncommittedEvents = append(a.uncommittedEvents, evt)
-
-	return nil
-}
-
 func (a *CartAggregate) Hydration(events []event.Event) error {
 	for _, evt := range events {
 		switch e := evt.(type) {
@@ -195,9 +174,6 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 			a.version = e.GetVersion()
 		case *event.CartSubmittedEvent:
 			a.status = CartStatusSubmitted
-			a.version = e.GetVersion()
-		case *event.CartPurchasedEvent:
-			a.status = CartStatusClosed
 			a.version = e.GetVersion()
 		}
 	}

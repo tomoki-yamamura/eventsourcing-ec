@@ -25,7 +25,6 @@ func NewEventDeserializer() repository.EventDeserializer {
 	registry.register(NewCartCreatedEventDeserializer())
 	registry.register(NewItemAddedToCartEventDeserializer())
 	registry.register(NewCartSubmittedEventDeserializer())
-	registry.register(NewCartPurchasedEventDeserializer())
 
 	return registry
 }

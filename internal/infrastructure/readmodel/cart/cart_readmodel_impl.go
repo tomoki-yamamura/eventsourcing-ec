@@ -3,6 +3,7 @@ package cart
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
@@ -139,30 +140,27 @@ func (c *CartReadModelImpl) Upsert(ctx context.Context, aggregateID string, view
 			return appErrors.RepositoryError.Wrap(err, "failed to upsert cart")
 		}
 
-		// Delete existing cart items
 		deleteItemsQuery := `DELETE FROM cart_items WHERE cart_id = ?`
 		_, err = tx.ExecContext(ctx, deleteItemsQuery, aggregateID)
 		if err != nil {
 			return appErrors.RepositoryError.Wrap(err, "failed to delete existing cart items")
 		}
 
-		// Insert new cart items
 		if len(view.Items) > 0 {
-			itemQuery := `
-				INSERT INTO cart_items (id, cart_id, quantity, price)
-				VALUES (?, ?, ?, ?)
-			`
-
+			values := make([]interface{}, 0, len(view.Items)*4)
+			placeholders := make([]string, 0, len(view.Items))
+			
 			for _, item := range view.Items {
-				_, err = tx.ExecContext(ctx, itemQuery,
-					item.ID,
-					item.CartID,
-					item.Quantity,
-					item.Price,
-				)
-				if err != nil {
-					return appErrors.RepositoryError.Wrap(err, "failed to insert cart item")
-				}
+				placeholders = append(placeholders, "(?, ?, ?, ?)")
+				values = append(values, item.ID, item.CartID, item.Quantity, item.Price)
+			}
+			
+			itemQuery := "INSERT INTO cart_items (id, cart_id, quantity, price) VALUES " + 
+				strings.Join(placeholders, ", ")
+
+			_, err = tx.ExecContext(ctx, itemQuery, values...)
+			if err != nil {
+				return appErrors.RepositoryError.Wrap(err, "failed to bulk insert cart items")
 			}
 		}
 

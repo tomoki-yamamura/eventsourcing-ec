@@ -30,7 +30,7 @@ func (p *CartProjectorImpl) Handle(ctx context.Context, e event.Event) error {
 	p.seen[eventID] = struct{}{}
 
 	switch e.(type) {
-	case *event.CartCreatedEvent, *event.ItemAddedToCartEvent, *event.CartSubmittedEvent, *event.CartPurchasedEvent:
+	case *event.CartCreatedEvent, *event.ItemAddedToCartEvent, *event.CartSubmittedEvent:
 		aggID := e.GetAggregateID().String()
 
 		current, err := p.viewRepo.Get(ctx, aggID)
@@ -132,24 +132,6 @@ func (p *CartProjectorImpl) applyToView(view *dto.CartViewDTO, e event.Event) *d
 			CreatedAt:   view.CreatedAt,
 			UpdatedAt:   evt.GetTimestamp(),
 			PurchasedAt: view.PurchasedAt,
-			Version:     evt.GetVersion(),
-		}
-	case *event.CartPurchasedEvent:
-		if view == nil {
-			return nil
-		}
-
-		purchasedAt := evt.GetTimestamp()
-		return &dto.CartViewDTO{
-			ID:          view.ID,
-			UserID:      view.UserID,
-			Status:      "PURCHASED",
-			TotalAmount: view.TotalAmount,
-			ItemCount:   view.ItemCount,
-			Items:       view.Items,
-			CreatedAt:   view.CreatedAt,
-			UpdatedAt:   evt.GetTimestamp(),
-			PurchasedAt: &purchasedAt,
 			Version:     evt.GetVersion(),
 		}
 	}
