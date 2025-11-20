@@ -1,13 +1,9 @@
--- ksqlDB Streams for Cart Event Analysis
--- This file defines streams and queries for real-time cart analysis
--- Create stream for cart events from Kafka topic
 CREATE STREAM cart_events (
     aggregate_id VARCHAR,
     event_type VARCHAR,
     event_id VARCHAR,
     timestamp BIGINT,
     version INT,
-    -- Event-specific data (JSON string that we can parse)
     data VARCHAR
 )
 WITH
@@ -17,7 +13,6 @@ WITH
         timestamp = 'timestamp'
     );
 
--- Create a more structured stream by parsing the event data
 CREATE STREAM cart_events_structured AS
 SELECT
     aggregate_id,
@@ -35,7 +30,6 @@ SELECT
 FROM
     cart_events;
 
--- Create a table to track the latest state of each cart
 CREATE TABLE
     cart_state AS
 SELECT
@@ -48,8 +42,6 @@ FROM
 GROUP BY
     aggregate_id;
 
--- Query to detect abandoned carts (carts created but not submitted/purchased for > 30 minutes)
--- This creates a persistent query that continuously monitors for abandoned carts
 CREATE STREAM abandoned_carts AS
 SELECT
     aggregate_id,
@@ -62,8 +54,6 @@ WHERE
     latest_action IN ('CREATED', 'ITEM_ADDED')
     AND (UNIX_TIMESTAMP () * 1000 - last_activity_time) > 1800000;
 
--- 30 minutes in milliseconds
--- Query to get cart conversion funnel metrics
 CREATE TABLE
     cart_funnel_metrics AS
 SELECT
