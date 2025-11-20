@@ -7,12 +7,12 @@ import (
 )
 
 type CartSubmittedEvent struct {
-	AggregateID uuid.UUID `json:"aggregate_id"`
-	TotalAmount float64   `json:"total_amount"`
-	SubmittedAt time.Time `json:"submitted_at"`
-	EventID     uuid.UUID `json:"event_id"`
-	Timestamp   time.Time `json:"timestamp"`
-	Version     int       `json:"version"`
+	AggregateID uuid.UUID
+	TotalAmount float64
+	SubmittedAt time.Time
+	EventID     uuid.UUID
+	Timestamp   time.Time
+	Version     int
 }
 
 func NewCartSubmittedEvent(aggregateID uuid.UUID, version int, totalAmount float64) *CartSubmittedEvent {
