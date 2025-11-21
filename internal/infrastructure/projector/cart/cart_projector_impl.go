@@ -80,29 +80,18 @@ func (p *CartProjectorImpl) applyToView(view *dto.CartViewDTO, e event.Event) *d
 		newItems := make([]dto.CartItemViewDTO, len(view.Items))
 		copy(newItems, view.Items)
 
-		itemExists := false
-		for i, item := range newItems {
-			if item.ID == evt.ItemID.String() {
-				newItems[i].Quantity += evt.Quantity
-				itemExists = true
-				break
-			}
-		}
-
-		if !itemExists {
-			newItems = append(newItems, dto.CartItemViewDTO{
-				ID:       evt.ItemID.String(),
-				CartID:   evt.GetAggregateID().String(),
-				Quantity: evt.Quantity,
-				Price:    evt.Price,
-			})
-		}
+		newItems = append(newItems, dto.CartItemViewDTO{
+			ID:     evt.ItemID.String(),
+			CartID: evt.GetAggregateID().String(),
+			Name:   evt.GetName(),
+			Price:  evt.Price,
+		})
 
 		totalAmount := 0.0
 		itemCount := 0
 		for _, item := range newItems {
-			totalAmount += item.Price * float64(item.Quantity)
-			itemCount += item.Quantity
+			totalAmount += item.Price
+			itemCount++
 		}
 
 		return &dto.CartViewDTO{

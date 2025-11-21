@@ -6,16 +6,16 @@ import (
 )
 
 type CartItem struct {
-	ItemID   uuid.UUID
-	Quantity value.Quantity
-	Price    value.Price
+	ItemID uuid.UUID
+	Name   string
+	Price  value.Price
 }
 
-func NewCartItem(itemID uuid.UUID, quantity value.Quantity, price value.Price) *CartItem {
+func NewCartItem(itemID uuid.UUID, name string, price value.Price) *CartItem {
 	return &CartItem{
-		ItemID:   itemID,
-		Quantity: quantity,
-		Price:    price,
+		ItemID: itemID,
+		Name:   name,
+		Price:  price,
 	}
 }
 
@@ -23,16 +23,10 @@ func (ci *CartItem) GetItemID() uuid.UUID {
 	return ci.ItemID
 }
 
-func (ci *CartItem) GetQuantity() value.Quantity {
-	return ci.Quantity
+func (ci *CartItem) GetName() string {
+	return ci.Name
 }
 
 func (ci *CartItem) GetPrice() value.Price {
 	return ci.Price
-}
-
-func (ci *CartItem) GetTotal() value.Price {
-	totalFloat := ci.Price.Float64() * float64(ci.Quantity.Int())
-	total, _ := value.NewPrice(totalFloat)
-	return total
 }

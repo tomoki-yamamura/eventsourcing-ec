@@ -9,18 +9,18 @@ import (
 type ItemAddedToCartEvent struct {
 	AggregateID uuid.UUID
 	ItemID      uuid.UUID
-	Quantity    int
+	Name        string
 	Price       float64
 	EventID     uuid.UUID
 	Timestamp   time.Time
 	Version     int
 }
 
-func NewItemAddedToCartEvent(aggregateID uuid.UUID, version int, itemID uuid.UUID, quantity int, price float64) *ItemAddedToCartEvent {
+func NewItemAddedToCartEvent(aggregateID uuid.UUID, version int, itemID uuid.UUID, name string, price float64) *ItemAddedToCartEvent {
 	return &ItemAddedToCartEvent{
 		AggregateID: aggregateID,
 		ItemID:      itemID,
-		Quantity:    quantity,
+		Name:        name,
 		Price:       price,
 		EventID:     uuid.New(),
 		Timestamp:   time.Now(),
@@ -56,8 +56,8 @@ func (e *ItemAddedToCartEvent) GetItemID() uuid.UUID {
 	return e.ItemID
 }
 
-func (e *ItemAddedToCartEvent) GetQuantity() int {
-	return e.Quantity
+func (e *ItemAddedToCartEvent) GetName() string {
+	return e.Name
 }
 
 func (e *ItemAddedToCartEvent) GetPrice() float64 {

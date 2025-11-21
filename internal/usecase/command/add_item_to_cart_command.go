@@ -69,11 +69,11 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 			}
 
 			cmd := command.AddItemToCartCommand{
-				CartID:   cartUUID,
-				UserID:   userUUID,
-				ItemID:   itemUUID,
-				Quantity: input.Quantity,
-				Price:    input.Price,
+				CartID: cartUUID,
+				UserID: userUUID,
+				ItemID: itemUUID,
+				Name:   input.Name,
+				Price:  input.Price,
 			}
 
 			if err := cart.ExecuteAddItemToCartCommand(cmd); err != nil {

@@ -64,7 +64,7 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 
 		// Get cart items
 		itemsQuery := `
-			SELECT id, cart_id, quantity, price
+			SELECT id, cart_id, name, price
 			FROM cart_items 
 			WHERE cart_id = ?
 		`
@@ -81,7 +81,7 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 			err := rows.Scan(
 				&item.ID,
 				&item.CartID,
-				&item.Quantity,
+				&item.Name,
 				&item.Price,
 			)
 			if err != nil {
@@ -152,10 +152,10 @@ func (c *CartReadModelImpl) Upsert(ctx context.Context, aggregateID string, view
 			
 			for _, item := range view.Items {
 				placeholders = append(placeholders, "(?, ?, ?, ?)")
-				values = append(values, item.ID, item.CartID, item.Quantity, item.Price)
+				values = append(values, item.ID, item.CartID, item.Name, item.Price)
 			}
 			
-			itemQuery := "INSERT INTO cart_items (id, cart_id, quantity, price) VALUES " + 
+			itemQuery := "INSERT INTO cart_items (id, cart_id, name, price) VALUES " + 
 				strings.Join(placeholders, ", ")
 
 			_, err = tx.ExecContext(ctx, itemQuery, values...)

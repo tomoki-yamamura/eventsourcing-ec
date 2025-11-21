@@ -18,8 +18,8 @@ type CartViewDTO struct {
 }
 
 type CartItemViewDTO struct {
-	ID       string  `json:"id"`
-	CartID   string  `json:"cart_id"`
-	Quantity int     `json:"quantity"`
-	Price    float64 `json:"price"`
+	ID     string  `json:"id"`
+	CartID string  `json:"cart_id"`
+	Name   string  `json:"name"`
+	Price  float64 `json:"price"`
 }

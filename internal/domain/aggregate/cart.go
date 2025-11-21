@@ -80,36 +80,16 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 		a.uncommittedEvents = append(a.uncommittedEvents, evt)
 	}
 
-	quantity, err := value.NewQuantity(cmd.Quantity)
-	if err != nil {
-		return err
-	}
-
 	price, err := value.NewPrice(cmd.Price)
 	if err != nil {
 		return err
 	}
 
-	for i, item := range a.items {
-		if item.ItemID == cmd.ItemID {
-			newQuantity, err := item.Quantity.Add(quantity)
-			if err != nil {
-				return err
-			}
-			a.items[i] = entity.NewCartItem(cmd.ItemID, newQuantity, price)
-
-			a.version++
-			evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, quantity.Int(), price.Float64())
-			a.uncommittedEvents = append(a.uncommittedEvents, evt)
-			return nil
-		}
-	}
-
-	cartItem := entity.NewCartItem(cmd.ItemID, quantity, price)
+	cartItem := entity.NewCartItem(cmd.ItemID, cmd.Name, price)
 	a.items = append(a.items, cartItem)
 
 	a.version++
-	evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, quantity.Int(), price.Float64())
+	evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, cmd.Name, price.Float64())
 	a.uncommittedEvents = append(a.uncommittedEvents, evt)
 
 	return nil
@@ -140,7 +120,7 @@ func (a *CartAggregate) ExecuteSubmitCartCommand(cmd command.SubmitCartCommand) 
 func (a *CartAggregate) GetTotalAmount() value.Price {
 	total := 0.0
 	for _, item := range a.items {
-		total += item.GetTotal().Float64()
+		total += item.GetPrice().Float64()
 	}
 	totalPrice, _ := value.NewPrice(total)
 	return totalPrice
@@ -155,22 +135,9 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 			a.status = CartStatusOpen
 			a.version = e.GetVersion()
 		case *event.ItemAddedToCartEvent:
-			quantity, _ := value.NewQuantity(e.GetQuantity())
 			price, _ := value.NewPrice(e.GetPrice())
-
-			found := false
-			for i, item := range a.items {
-				if item.ItemID == e.GetItemID() {
-					newQuantity, _ := item.Quantity.Add(quantity)
-					a.items[i] = entity.NewCartItem(e.GetItemID(), newQuantity, price)
-					found = true
-					break
-				}
-			}
-			if !found {
-				cartItem := entity.NewCartItem(e.GetItemID(), quantity, price)
-				a.items = append(a.items, cartItem)
-			}
+			cartItem := entity.NewCartItem(e.GetItemID(), e.GetName(), price)
+			a.items = append(a.items, cartItem)
 			a.version = e.GetVersion()
 		case *event.CartSubmittedEvent:
 			a.status = CartStatusSubmitted
