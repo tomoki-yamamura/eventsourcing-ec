@@ -151,7 +151,7 @@ func TestOutboxRepository_GetPendingEvents(t *testing.T) {
 
 			if len(events) > 1 {
 				for i := 1; i < len(events); i++ {
-					require.True(t, events[i-1].CreatedAt.Before(events[i].CreatedAt) || 
+					require.True(t, events[i-1].CreatedAt.Before(events[i].CreatedAt) ||
 						events[i-1].CreatedAt.Equal(events[i].CreatedAt))
 				}
 			}

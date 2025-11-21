@@ -36,7 +36,7 @@ func (p *submitTestPresenter) PresentError(ctx context.Context, err error) error
 
 func TestSubmitCartCommand_Execute(t *testing.T) {
 	cartID := uuid.New().String()
-	
+
 	tests := map[string]struct {
 		input           *input.SubmitCartInput
 		expectedVersion int

@@ -37,9 +37,9 @@ func (p *testPresenter) PresentError(ctx context.Context, err error) error {
 
 func TestCartAddItemCommand_Execute(t *testing.T) {
 	tests := map[string]struct {
-		input               *input.AddItemToCartInput
-		expectedEventCount  int
-		expectedVersion     int
+		input              *input.AddItemToCartInput
+		expectedEventCount int
+		expectedVersion    int
 	}{
 		"add item to new cart": {
 			input: &input.AddItemToCartInput{

@@ -18,7 +18,7 @@ import (
 
 const (
 	TestTypeA = "TestEventA"
-	TestTypeB = "TestEventB" 
+	TestTypeB = "TestEventB"
 	TestTypeC = "TestEventC"
 )
 

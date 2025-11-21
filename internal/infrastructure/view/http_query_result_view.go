@@ -27,14 +27,14 @@ func (v *HTTPQueryResultView) Success(data []byte) error {
 
 func (v *HTTPQueryResultView) Error(err error) error {
 	v.writer.Header().Set("Content-Type", "application/json")
-	
+
 	statusCode := v.getStatusCodeFromError(err)
 	v.writer.WriteHeader(statusCode)
-	
+
 	errorResponse := map[string]string{
 		"error": err.Error(),
 	}
-	
+
 	return json.NewEncoder(v.writer).Encode(errorResponse)
 }
 
@@ -48,6 +48,6 @@ func (v *HTTPQueryResultView) getStatusCodeFromError(err error) int {
 	if errors.IsCode(err, errors.UnpermittedOp) {
 		return http.StatusForbidden
 	}
-	
+
 	return http.StatusInternalServerError
 }

@@ -149,13 +149,13 @@ func (c *CartReadModelImpl) Upsert(ctx context.Context, aggregateID string, view
 		if len(view.Items) > 0 {
 			values := make([]interface{}, 0, len(view.Items)*4)
 			placeholders := make([]string, 0, len(view.Items))
-			
+
 			for _, item := range view.Items {
 				placeholders = append(placeholders, "(?, ?, ?, ?)")
 				values = append(values, item.ID, item.CartID, item.Name, item.Price)
 			}
-			
-			itemQuery := "INSERT INTO cart_items (id, cart_id, name, price) VALUES " + 
+
+			itemQuery := "INSERT INTO cart_items (id, cart_id, name, price) VALUES " +
 				strings.Join(placeholders, ", ")
 
 			_, err = tx.ExecContext(ctx, itemQuery, values...)

@@ -283,7 +283,7 @@ func TestCartAggregate_GetTotalAmount(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			// Arrange
 			cart := aggregate.NewCartAggregate()
 			for _, existingCmd := range tt.existingItems {
