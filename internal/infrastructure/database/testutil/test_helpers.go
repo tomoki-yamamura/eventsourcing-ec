@@ -22,6 +22,11 @@ const (
 	TestTypeC = "TestEventC"
 )
 
+// TimeNow returns current time for testing
+func TimeNow() time.Time {
+	return time.Now()
+}
+
 type TestEvent struct {
 	AggregateID uuid.UUID `json:"aggregate_id"`
 	EventID     uuid.UUID `json:"event_id"`
