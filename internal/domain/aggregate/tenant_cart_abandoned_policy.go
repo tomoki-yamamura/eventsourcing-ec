@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 )
@@ -18,21 +19,6 @@ type TenantCartAbandonedPolicyAggregate struct {
 	uncommitted          []event.Event
 }
 
-type CreateTenantCartAbandonedPolicyCommand struct {
-	TenantID         uuid.UUID
-	Title            string
-	AbandonedMinutes int
-	QuietTimeFrom    time.Time
-	QuietTimeTo      time.Time
-}
-
-type UpdateTenantCartAbandonedPolicyCommand struct {
-	TenantID         uuid.UUID
-	Title            string
-	AbandonedMinutes int
-	QuietTimeFrom    time.Time
-	QuietTimeTo      time.Time
-}
 
 func NewTenantCartAbandonedPolicyAggregate() *TenantCartAbandonedPolicyAggregate {
 	return &TenantCartAbandonedPolicyAggregate{
@@ -109,7 +95,7 @@ func (a *TenantCartAbandonedPolicyAggregate) IsWithinQuietTime(now time.Time) (b
 }
 
 // 初回作成（管理画面でテナント作成時など）
-func (a *TenantCartAbandonedPolicyAggregate) Create(cmd CreateTenantCartAbandonedPolicyCommand) error {
+func (a *TenantCartAbandonedPolicyAggregate) Create(cmd command.CreateTenantCartAbandonedPolicyCommand) error {
 	if a.version != -1 {
 		return errors.UnpermittedOp.New("tenant policy already exists")
 	}
@@ -131,7 +117,7 @@ func (a *TenantCartAbandonedPolicyAggregate) Create(cmd CreateTenantCartAbandone
 }
 
 // 設定変更（管理画面から）
-func (a *TenantCartAbandonedPolicyAggregate) UpdatePolicy(cmd UpdateTenantCartAbandonedPolicyCommand) error {
+func (a *TenantCartAbandonedPolicyAggregate) UpdatePolicy(cmd command.UpdateTenantCartAbandonedPolicyCommand) error {
 	if a.version == -1 {
 		return errors.UnpermittedOp.New("tenant policy not created")
 	}
