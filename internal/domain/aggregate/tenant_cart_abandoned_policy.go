@@ -94,8 +94,8 @@ func (a *TenantCartAbandonedPolicyAggregate) IsWithinQuietTime(now time.Time) (b
 	}
 }
 
-// 初回作成（管理画面でテナント作成時など）
-func (a *TenantCartAbandonedPolicyAggregate) Create(cmd command.CreateTenantCartAbandonedPolicyCommand) error {
+// ExecuteCreateTenantCartAbandonedPolicyCommand 初回作成コマンドを実行
+func (a *TenantCartAbandonedPolicyAggregate) ExecuteCreateTenantCartAbandonedPolicyCommand(cmd command.CreateTenantCartAbandonedPolicyCommand) error {
 	if a.version != -1 {
 		return errors.UnpermittedOp.New("tenant policy already exists")
 	}
@@ -116,8 +116,8 @@ func (a *TenantCartAbandonedPolicyAggregate) Create(cmd command.CreateTenantCart
 	return nil
 }
 
-// 設定変更（管理画面から）
-func (a *TenantCartAbandonedPolicyAggregate) UpdatePolicy(cmd command.UpdateTenantCartAbandonedPolicyCommand) error {
+// ExecuteUpdateTenantCartAbandonedPolicyCommand 更新コマンドを実行
+func (a *TenantCartAbandonedPolicyAggregate) ExecuteUpdateTenantCartAbandonedPolicyCommand(cmd command.UpdateTenantCartAbandonedPolicyCommand) error {
 	if a.version == -1 {
 		return errors.UnpermittedOp.New("tenant policy not created")
 	}

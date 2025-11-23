@@ -6,14 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateTenantCartAbandonedPolicyCommand struct {
-	TenantID         uuid.UUID
-	Title            string
-	AbandonedMinutes int
-	QuietTimeFrom    time.Time
-	QuietTimeTo      time.Time
-}
-
 type UpdateTenantCartAbandonedPolicyCommand struct {
 	TenantID         uuid.UUID
 	Title            string
