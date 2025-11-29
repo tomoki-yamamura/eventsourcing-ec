@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
 type DelayedMessage struct {
-	Message   *messaging.Message
+	Message   *dto.Message
 	Topic     string
 	Key       string
 	ExecuteAt time.Time
@@ -27,10 +27,9 @@ func NewMemoryDelayQueue() *MemoryDelayQueue {
 	}
 }
 
-
-func (q *MemoryDelayQueue) PublishDelayedMessage(topic, key string, message *messaging.Message, delay time.Duration) error {
+func (q *MemoryDelayQueue) PublishDelayedMessage(topic, key string, message *dto.Message, delay time.Duration) error {
 	executeAt := time.Now().Add(delay)
-	
+
 	delayedMsg := &DelayedMessage{
 		Message:   message,
 		Topic:     topic,
@@ -42,7 +41,7 @@ func (q *MemoryDelayQueue) PublishDelayedMessage(topic, key string, message *mes
 	q.messages[message.ID.String()] = delayedMsg
 	q.mu.Unlock()
 
-	log.Printf("Scheduled delayed message %s for topic %s, will execute at %s (in %v)", 
+	log.Printf("Scheduled delayed message %s for topic %s, will execute at %s (in %v)",
 		message.ID.String(), topic, executeAt.Format(time.RFC3339), delay)
 
 	return nil
@@ -50,7 +49,7 @@ func (q *MemoryDelayQueue) PublishDelayedMessage(topic, key string, message *mes
 
 func (q *MemoryDelayQueue) Start(ctx context.Context) error {
 	log.Println("Starting Memory Delay Queue...")
-	
+
 	ticker := time.NewTicker(5 * time.Second) // 5秒ごとにチェック
 	defer ticker.Stop()
 
@@ -83,7 +82,7 @@ func (q *MemoryDelayQueue) processExpiredMessages() {
 	}
 }
 
-func (q *MemoryDelayQueue) processMessage(topic, key string, message *messaging.Message) {
+func (q *MemoryDelayQueue) processMessage(topic, key string, message *dto.Message) {
 	// 簡単な処理：ログ出力のみ
 	log.Printf(" PROCESSING DELAYED MESSAGE:")
 	log.Printf("   Topic: %s", topic)
@@ -93,7 +92,7 @@ func (q *MemoryDelayQueue) processMessage(topic, key string, message *messaging.
 	log.Printf("   Message Data: %+v", message.Data)
 	log.Printf("   Aggregate ID: %s", message.AggregateID.String())
 	log.Printf("   Version: %d", message.Version)
-	
+
 	// ここで実際のカゴ落ち通知処理を行う予定
 	if message.Type == "CheckCartAbandonmentCommand" {
 		if cartID, ok := message.Data.(map[string]any)["cart_id"].(string); ok {

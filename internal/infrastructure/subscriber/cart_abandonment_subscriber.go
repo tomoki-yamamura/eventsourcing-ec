@@ -11,6 +11,7 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
 type CartAbandonmentSubscriber struct {
@@ -68,7 +69,7 @@ func (s *CartAbandonmentSubscriber) scheduleCartAbandonmentCheck(ctx context.Con
 
 	delay := policy.CartAbandonedDelay()
 
-	delayedMessage := &messaging.Message{
+	delayedMessage := &dto.Message{
 		ID:   uuid.New(),
 		Type: "CheckCartAbandonmentCommand",
 		Data: map[string]any{

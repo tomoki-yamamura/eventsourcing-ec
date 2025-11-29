@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,13 +10,10 @@ import (
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/container"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/config"
-	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/register"
 )
 
 func main() {
-	fmt.Println("Starting Event Sourcing E-Commerce Application")
-
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
@@ -38,12 +34,7 @@ func main() {
 	}()
 
 	go func() {
-		projService, err := projectorService.NewProjectorService(cfg)
-		if err != nil {
-			log.Printf("Failed to create projector service: %v", err)
-			return
-		}
-		if err := projService.Start(ctx); err != nil {
+		if err := cont.ProjectorService.Start(ctx); err != nil {
 			log.Printf("Projector service stopped: %v", err)
 		}
 	}()
@@ -68,19 +59,27 @@ func main() {
 	}
 
 	go func() {
-		fmt.Printf("Server starting on port %s\n", cfg.HTTPPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
 	<-c
-	fmt.Println("\nReceived shutdown signal, gracefully shutting down...")
+	log.Println("\nReceived shutdown signal, gracefully shutting down...")
 	cancel()
 
+	if err := cont.CartAbandonmentService.Close(); err != nil {
+		log.Printf("Cart abandonment service close error: %v", err)
+	}
+
+	if err := cont.ProjectorService.Close(); err != nil {
+		log.Printf("Projector service close error: %v", err)
+	}
+
+	// Shutdown HTTP server
 	if err := server.Shutdown(context.Background()); err != nil {
 		log.Printf("Server shutdown error: %v", err)
 	}
 
-	fmt.Println("Application stopped")
+	log.Println("Application stopped")
 }

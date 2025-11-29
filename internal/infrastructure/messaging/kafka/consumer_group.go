@@ -8,20 +8,19 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
-
-type MessageHandler func(context.Context, *messaging.Message) error
 
 type ConsumerGroup struct {
 	brokers       []string
 	groupID       string
 	topics        []string
-	handlers      []MessageHandler
+	handlers      []messaging.MessageHandler
 	deserializer  repository.EventDeserializer
 	consumerGroup sarama.ConsumerGroup
 }
 
-func NewConsumerGroup(brokers []string, groupID string, topics []string, deserializer repository.EventDeserializer) (*ConsumerGroup, error) {
+func NewConsumerGroup(brokers []string, groupID string, topics []string, deserializer repository.EventDeserializer) (messaging.ConsumerGroup, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
@@ -36,13 +35,13 @@ func NewConsumerGroup(brokers []string, groupID string, topics []string, deseria
 		brokers:       brokers,
 		groupID:       groupID,
 		topics:        topics,
-		handlers:      make([]MessageHandler, 0),
+		handlers:      make([]messaging.MessageHandler, 0),
 		deserializer:  deserializer,
 		consumerGroup: consumerGroup,
 	}, nil
 }
 
-func (c *ConsumerGroup) AddHandler(handler MessageHandler) {
+func (c *ConsumerGroup) AddHandler(handler messaging.MessageHandler) {
 	c.handlers = append(c.handlers, handler)
 }
 
@@ -75,7 +74,7 @@ func (c *ConsumerGroup) Start(ctx context.Context) error {
 }
 
 func (c *ConsumerGroup) handleMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
-	var msg messaging.Message
+	var msg dto.Message
 	if err := json.Unmarshal(message.Value, &msg); err != nil {
 		log.Printf("Failed to unmarshal message: %v", err)
 		return nil

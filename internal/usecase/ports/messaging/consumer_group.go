@@ -2,12 +2,14 @@ package messaging
 
 import (
 	"context"
-	"time"
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
-type DelayQueue interface {
-	PublishDelayedMessage(topic, key string, message *dto.Message, delay time.Duration) error
+type ConsumerGroup interface {
+	AddHandler(handler MessageHandler) 
 	Start(ctx context.Context) error
+	Close() error
 }
+
+type MessageHandler func(context.Context, *dto.Message) error

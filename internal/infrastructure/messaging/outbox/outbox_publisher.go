@@ -10,6 +10,7 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
 const (
@@ -83,7 +84,7 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 			continue
 		}
 
-		message := &messaging.Message{
+		message := &dto.Message{
 			ID:          outboxEvent.EventID,
 			Type:        outboxEvent.EventType,
 			Data:        json.RawMessage(outboxEvent.EventData),
@@ -128,6 +129,6 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 	return nil
 }
 
-func (op *OutboxPublisher) publishMessage(topic, key string, message *messaging.Message) error {
+func (op *OutboxPublisher) publishMessage(topic, key string, message *dto.Message) error {
 	return op.messageProducer.PublishMessage(topic, key, message)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/IBM/sarama"
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
 type Producer struct {
@@ -32,7 +33,7 @@ func NewProducer(brokers []string) (messaging.MessageProducer, error) {
 	}, nil
 }
 
-func (p *Producer) PublishMessage(topic string, key string, message *messaging.Message) error {
+func (p *Producer) PublishMessage(topic string, key string, message *dto.Message) error {
 	messageBytes, err := json.Marshal(message)
 	if err != nil {
 		return appErrors.Unknown.Wrap(err, "failed to serialize message")
@@ -62,7 +63,7 @@ func (p *Producer) PublishMessage(topic string, key string, message *messaging.M
 	return nil
 }
 
-func (p *Producer) PublishDelayedMessage(topic, key string, message *messaging.Message, delay time.Duration) error {
+func (p *Producer) PublishDelayedMessage(topic, key string, message *dto.Message, delay time.Duration) error {
 	return appErrors.Unknown.New("delayed message publishing not supported by Kafka producer")
 }
 

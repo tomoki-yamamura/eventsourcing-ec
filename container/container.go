@@ -16,6 +16,8 @@ import (
 	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/readmodel/cart"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber"
 	cartAbandonmentService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber/service"
+	cartProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/cart"
+	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
@@ -34,10 +36,21 @@ type Container struct {
 	Deserializer repository.EventDeserializer
 
 	// Messaging
+	MessageProducer messaging.MessageProducer
+	TopicRouter     messaging.TopicRouter
+	DelayQueue      messaging.DelayQueue
 	OutboxPublisher messaging.OutboxPublisher
 
 	// Read model
 	CartStore readmodelstore.CartStore
+
+	// Subscribers
+	CartAbandonmentSubscriber messaging.Subscriber
+	CartProjector            gateway.Projector
+
+	// Consumer Groups
+	CartAbandonmentConsumer messaging.ConsumerGroup
+	ProjectorConsumer       messaging.ConsumerGroup
 
 	// Use case layer
 	CartAddItemCommand commandUseCase.CartAddItemCommandInterface
@@ -45,6 +58,7 @@ type Container struct {
 
 	// Services
 	CartAbandonmentService gateway.CartAbandonmentService
+	ProjectorService       gateway.ProjectorService
 }
 
 func NewContainer() *Container {
@@ -64,16 +78,18 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	c.EventStore = eventstore.NewEventStore(c.Deserializer)
 	c.OutboxRepo = outboxRepo.NewOutboxRepository()
 
-	messageProducer, err := kafka.NewProducer(cfg.KafkaConfig.Brokers)
+	// Messaging infrastructure
+	c.MessageProducer, err = kafka.NewProducer(cfg.KafkaConfig.Brokers)
 	if err != nil {
 		return err
 	}
-	topicRouter := kafka.NewStaticTopicRouter()
+	c.TopicRouter = kafka.NewStaticTopicRouter()
+	c.DelayQueue = delayqueue.NewMemoryDelayQueue()
 	c.OutboxPublisher = outboxPublisher.NewOutboxPublisher(
 		c.Transaction,
 		c.OutboxRepo,
-		messageProducer,
-		topicRouter,
+		c.MessageProducer,
+		c.TopicRouter,
 	)
 
 	c.CartAddItemCommand = commandUseCase.NewCartAddItemCommand(c.Transaction, c.EventStore, c.OutboxRepo)
@@ -82,25 +98,37 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	c.CartStore = cartReadModel.NewCartReadModel(c.Transaction)
 	c.GetCartQuery = queryUseCase.NewGetCartQuery(c.CartStore)
 
-	// Cart abandonment service
-	delayQueue := delayqueue.NewMemoryDelayQueue()
-	cartAbandonmentSubscriber := subscriber.NewCartAbandonmentSubscriber(
+	// Subscribers
+	c.CartAbandonmentSubscriber = subscriber.NewCartAbandonmentSubscriber(
 		c.Transaction,
 		c.EventStore,
-		delayQueue,
+		c.DelayQueue,
 	)
-	
+	c.CartProjector = cartProjector.NewCartProjector(c.CartStore)
+
+	// Consumer Groups
 	topics := []string{"ec.cart-events"}
-	kafkaConsumer, err := kafka.NewConsumerGroup(cfg.KafkaConfig.Brokers, "cart-abandonment-group", topics, c.Deserializer)
+	c.CartAbandonmentConsumer, err = kafka.NewConsumerGroup(cfg.KafkaConfig.Brokers, "cart-abandonment-group", topics, c.Deserializer)
+	if err != nil {
+		return err
+	}
+	c.ProjectorConsumer, err = kafka.NewConsumerGroup(cfg.KafkaConfig.Brokers, "cart-projector-group", topics, c.Deserializer)
 	if err != nil {
 		return err
 	}
 
+	// Services
 	c.CartAbandonmentService = cartAbandonmentService.NewCartAbandonmentService(
 		c.Deserializer,
-		cartAbandonmentSubscriber,
-		kafkaConsumer,
-		delayQueue,
+		c.CartAbandonmentSubscriber,
+		c.CartAbandonmentConsumer,
+		c.DelayQueue,
+	)
+	c.ProjectorService = projectorService.NewProjectorService(
+		c.Transaction,
+		c.Deserializer,
+		c.CartProjector,
+		c.ProjectorConsumer,
 	)
 
 	return nil

@@ -7,10 +7,11 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/event"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
 )
 
 type EventSubscriber struct {
-	consumerGroup *ConsumerGroup
+	consumerGroup messaging.ConsumerGroup
 	deserializer  repository.EventDeserializer
 }
 
@@ -27,7 +28,7 @@ func NewEventSubscriber(brokers []string, groupID string, topics []string, deser
 }
 
 func (es *EventSubscriber) Subscribe(handler func(context.Context, event.Event) error) {
-	messageHandler := func(ctx context.Context, message *messaging.Message) error {
+	messageHandler := func(ctx context.Context, message *dto.Message) error {
 		// Convert Message back to domain Event
 		dataBytes, err := json.Marshal(message.Data)
 		if err != nil {
