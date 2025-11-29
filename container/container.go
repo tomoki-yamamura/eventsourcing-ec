@@ -13,10 +13,12 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/delayqueue"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 	outboxPublisher "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/outbox"
-	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/readmodel/cart"
+	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
+	tenantReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/tenant"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber"
 	cartAbandonmentService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber/service"
 	cartProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/cart"
+	tenantProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/tenant"
 	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
@@ -42,11 +44,13 @@ type Container struct {
 	OutboxPublisher messaging.OutboxPublisher
 
 	// Read model
-	CartStore readmodelstore.CartStore
+	CartStore        readmodelstore.CartStore
+	TenantPolicyStore readmodelstore.TenantPolicyStore
 
 	// Subscribers
 	CartAbandonmentSubscriber messaging.Subscriber
 	CartProjector            gateway.Projector
+	TenantPolicyProjector    gateway.Projector
 
 	// Consumer Groups
 	CartAbandonmentConsumer messaging.ConsumerGroup
@@ -57,6 +61,7 @@ type Container struct {
 	CreateTenantCartAbandonedPolicyCommand  commandUseCase.CreateTenantCartAbandonedPolicyCommandInterface
 	UpdateTenantCartAbandonedPolicyCommand  commandUseCase.UpdateTenantCartAbandonedPolicyCommandInterface
 	GetCartQuery                           queryUseCase.GetCartQueryInterface
+	GetTenantPolicyQuery                   queryUseCase.GetTenantPolicyQueryInterface
 
 	// Services
 	CartAbandonmentService gateway.CartAbandonmentService
@@ -100,7 +105,9 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 
 	// Read model and queries
 	c.CartStore = cartReadModel.NewCartReadModel(c.Transaction)
+	c.TenantPolicyStore = tenantReadModel.NewTenantPolicyReadModel(c.Transaction)
 	c.GetCartQuery = queryUseCase.NewGetCartQuery(c.CartStore)
+	c.GetTenantPolicyQuery = queryUseCase.NewGetTenantPolicyQuery(c.TenantPolicyStore)
 
 	// Subscribers
 	c.CartAbandonmentSubscriber = subscriber.NewCartAbandonmentSubscriber(
@@ -109,6 +116,7 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 		c.DelayQueue,
 	)
 	c.CartProjector = cartProjector.NewCartProjector(c.CartStore)
+	c.TenantPolicyProjector = tenantProjector.NewTenantPolicyProjector(c.TenantPolicyStore)
 
 	// Consumer Groups
 	topics := []string{"ec.cart-events"}
@@ -128,10 +136,14 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 		c.CartAbandonmentConsumer,
 		c.DelayQueue,
 	)
+	
+	// Combined projector that handles both cart and tenant policy events
+	combinedProjector := projectorService.NewCombinedProjector(c.CartProjector, c.TenantPolicyProjector)
+	
 	c.ProjectorService = projectorService.NewProjectorService(
 		c.Transaction,
 		c.Deserializer,
-		c.CartProjector,
+		combinedProjector,
 		c.ProjectorConsumer,
 	)
 

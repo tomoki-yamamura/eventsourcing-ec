@@ -10,7 +10,7 @@ import (
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/testutil"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
-	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/readmodel/cart"
+	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore/dto"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
 )
@@ -84,7 +84,6 @@ func TestGetCartQuery_Query(t *testing.T) {
 			require.Equal(t, tt.expectedStatus, actualCart.Status)
 			require.Equal(t, tt.expectedItemCount, len(actualCart.Items))
 
-			// Assert items
 			if len(actualCart.Items) > 0 {
 				require.Equal(t, "Test Item 1", actualCart.Items[0].Name)
 				require.Equal(t, 100.0, actualCart.Items[0].Price)

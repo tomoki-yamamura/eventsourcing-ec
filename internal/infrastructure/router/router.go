@@ -11,6 +11,7 @@ type Router struct {
 	getCartHandler               *query.GetCartQueryHandler
 	createTenantPolicyHandler    *command.CreateTenantCartAbandonedPolicyCommandHandler
 	updateTenantPolicyHandler    *command.UpdateTenantCartAbandonedPolicyCommandHandler
+	getTenantPolicyHandler       *query.GetTenantPolicyQueryHandler
 }
 
 func NewRouter(
@@ -18,12 +19,14 @@ func NewRouter(
 	getCartHandler *query.GetCartQueryHandler,
 	createTenantPolicyHandler *command.CreateTenantCartAbandonedPolicyCommandHandler,
 	updateTenantPolicyHandler *command.UpdateTenantCartAbandonedPolicyCommandHandler,
+	getTenantPolicyHandler *query.GetTenantPolicyQueryHandler,
 ) *Router {
 	return &Router{
 		cartAddItemHandler:        cartAddItemHandler,
 		getCartHandler:            getCartHandler,
 		createTenantPolicyHandler: createTenantPolicyHandler,
 		updateTenantPolicyHandler: updateTenantPolicyHandler,
+		getTenantPolicyHandler:    getTenantPolicyHandler,
 	}
 }
 
@@ -37,6 +40,7 @@ func (r *Router) SetupRoutes() *mux.Router {
 	// Tenant policy routes
 	router.HandleFunc("/tenants/{aggregate_id}/cart-abandoned-policies", r.createTenantPolicyHandler.CreateTenantCartAbandonedPolicy).Methods("POST")
 	router.HandleFunc("/tenants/{aggregate_id}/cart-abandoned-policies", r.updateTenantPolicyHandler.UpdateTenantCartAbandonedPolicy).Methods("PUT")
+	router.HandleFunc("/tenants/{aggregate_id}/cart-abandoned-policies", r.getTenantPolicyHandler.GetTenantPolicy).Methods("GET")
 
 	return router
 }

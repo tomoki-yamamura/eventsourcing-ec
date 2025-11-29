@@ -26,6 +26,10 @@ func NewEventDeserializer() repository.EventDeserializer {
 	registry.register(NewItemAddedToCartEventDeserializer())
 	registry.register(NewCartSubmittedEventDeserializer())
 
+	// Tenant policy events
+	registry.register(NewTenantCartAbandonedPolicyCreatedEventDeserializer())
+	registry.register(NewTenantCartAbandonedPolicyUpdatedEventDeserializer())
+
 	return registry
 }
 

@@ -62,31 +62,31 @@ tasks:
     cmds:
       - goose -dir internal/infrastructure/database/eventstore/migration create {{.CLI_ARGS}} sql
 
-  migrate:projector:up:
-    desc: Run projector migrations up
+  migrate:readmodel:up:
+    desc: Run read model migrations up
     cmds:
       - |
-        goose -dir internal/infrastructure/database/projector/migration mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" up
 
-  migrate:projector:down:
-    desc: Run projector migrations down
+  migrate:readmodel:down:
+    desc: Run read model migrations down
     cmds:
       - |
-        goose -dir internal/infrastructure/database/projector/migration mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
 
-  migrate:projector:status:
-    desc: Check projector migration status
+  migrate:readmodel:status:
+    desc: Check read model migration status
     cmds:
       - |
-        goose -dir internal/infrastructure/database/projector/migration mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
 
-  migrate:projector:create:
-    desc: Create new projector migration (usage{{":"}} task migrate{{":"}}projector{{":"}}create -- migration_name)
+  migrate:readmodel:create:
+    desc: Create new read model migration (usage{{":"}} task migrate{{":"}}readmodel{{":"}}create -- migration_name)
     cmds:
-      - goose -dir internal/infrastructure/database/projector/migration create {{.CLI_ARGS}} sql
+      - goose -dir internal/infrastructure/database/readmodel/migrations create {{.CLI_ARGS}} sql
 
   # Test Database Migrations
   migrate:test:eventstore:up:
@@ -96,24 +96,24 @@ tasks:
         goose -dir internal/infrastructure/database/eventstore/migration mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
-  migrate:test:projector:up:
-    desc: Run projector migrations up for test database
+  migrate:test:readmodel:up:
+    desc: Run read model migrations up for test database
     cmds:
       - |
-        goose -dir internal/infrastructure/database/projector/migration mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
   migrate:up:
-    desc: Run all migrations up (both eventstore and projector)
-    deps: [migrate:eventstore:up, migrate:projector:up]
+    desc: Run all migrations up (both eventstore and readmodel)
+    deps: [migrate:eventstore:up, migrate:readmodel:up]
 
   migrate:down:
-    desc: Run all migrations down (both eventstore and projector) 
-    deps: [migrate:projector:down, migrate:eventstore:down]
+    desc: Run all migrations down (both eventstore and readmodel) 
+    deps: [migrate:readmodel:down, migrate:eventstore:down]
 
   migrate:test:up:
     desc: Run all migrations up for test database
-    deps: [migrate:test:eventstore:up, migrate:test:projector:up]
+    deps: [migrate:test:eventstore:up, migrate:test:readmodel:up]
 
   db:setup:
     desc: Setup both main and test databases with migrations

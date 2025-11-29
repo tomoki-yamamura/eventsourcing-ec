@@ -25,7 +25,8 @@ func (r *HandlerRegister) SetupRouter() *router.Router {
 
 	// Query handlers
 	getCartQueryHandler := query.NewGetCartQueryHandler(r.container.GetCartQuery)
+	getTenantPolicyQueryHandler := query.NewGetTenantPolicyQueryHandler(r.container.GetTenantPolicyQuery)
 
 	// Router setup
-	return router.NewRouter(addItemCommandHandler, getCartQueryHandler, createTenantPolicyCommandHandler, updateTenantPolicyCommandHandler)
+	return router.NewRouter(addItemCommandHandler, getCartQueryHandler, createTenantPolicyCommandHandler, updateTenantPolicyCommandHandler, getTenantPolicyQueryHandler)
 }
