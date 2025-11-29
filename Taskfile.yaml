@@ -40,21 +40,21 @@ tasks:
     desc: Run event store migrations up
     cmds:
       - |
-        goose -dir internal/infrastructure/database/eventstore/migration mysql \
+        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" up
 
   migrate:eventstore:down:
     desc: Run event store migrations down
     cmds:
       - |
-        goose -dir internal/infrastructure/database/eventstore/migration mysql \
+        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
 
   migrate:eventstore:status:
     desc: Check event store migration status
     cmds:
       - |
-        goose -dir internal/infrastructure/database/eventstore/migration mysql \
+        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
 
   migrate:eventstore:create:
@@ -66,21 +66,21 @@ tasks:
     desc: Run read model migrations up
     cmds:
       - |
-        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" up
 
   migrate:readmodel:down:
     desc: Run read model migrations down
     cmds:
       - |
-        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
 
   migrate:readmodel:status:
     desc: Check read model migration status
     cmds:
       - |
-        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
 
   migrate:readmodel:create:
@@ -93,14 +93,14 @@ tasks:
     desc: Run event store migrations up for test database
     cmds:
       - |
-        goose -dir internal/infrastructure/database/eventstore/migration mysql \
+        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
   migrate:test:readmodel:up:
     desc: Run read model migrations up for test database
     cmds:
       - |
-        goose -dir internal/infrastructure/database/readmodel/migrations mysql \
+        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
   migrate:up:

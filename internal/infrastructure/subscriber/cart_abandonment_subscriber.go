@@ -89,20 +89,28 @@ func (s *CartAbandonmentSubscriber) scheduleCartAbandonmentCheck(ctx context.Con
 
 
 func (s *CartAbandonmentSubscriber) loadTenantPolicy(ctx context.Context, tenantID uuid.UUID) (*aggregate.TenantCartAbandonedPolicyAggregate, error) {
-	events, err := s.eventStore.LoadEvents(ctx, tenantID)
+	var policy *aggregate.TenantCartAbandonedPolicyAggregate
+	err := s.tx.RWTx(ctx, func(ctx context.Context) error {
+		events, err := s.eventStore.LoadEvents(ctx, tenantID)
+		if err != nil {
+			return err
+		}
+
+		policy = aggregate.NewTenantCartAbandonedPolicyAggregate()
+		if len(events) > 0 {
+			if err := policy.Hydration(events); err != nil {
+				return err
+			}
+		}
+
+		if policy.GetVersion() == -1 {
+			return errors.NotFound.New("tenant policy not found")
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	policy := aggregate.NewTenantCartAbandonedPolicyAggregate()
-	if len(events) > 0 {
-		if err := policy.Hydration(events); err != nil {
-			return nil, err
-		}
-	}
-
-	if policy.GetVersion() == -1 {
-		return nil, errors.NotFound.New("tenant policy not found")
 	}
 
 	return policy, nil

@@ -3,6 +3,7 @@ package cart
 import (
 	"context"
 	"database/sql"
+	"log"
 	"strings"
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
@@ -23,10 +24,12 @@ func NewCartReadModel(tx repository.Transaction) readmodelstore.CartStore {
 }
 
 func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.CartViewDTO, error) {
+	log.Printf("[CartReadModel] Getting cart %s", aggregateID)
 	var cart *dto.CartViewDTO
 	err := c.tx.RWTx(ctx, func(ctx context.Context) error {
 		tx, err := transaction.GetTx(ctx)
 		if err != nil {
+			log.Printf("[CartReadModel] Error getting transaction: %v", err)
 			return err
 		}
 
@@ -40,6 +43,7 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 		var cartView dto.CartViewDTO
 		var purchasedAt sql.NullTime
 
+		log.Printf("[CartReadModel] Executing cart query for %s", aggregateID)
 		err = tx.QueryRowContext(ctx, cartQuery, aggregateID).Scan(
 			&cartView.ID,
 			&cartView.UserID,
@@ -53,10 +57,13 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 		)
 		if err != nil {
 			if err == sql.ErrNoRows {
+				log.Printf("[CartReadModel] Cart %s not found", aggregateID)
 				return appErrors.NotFound.New("cart not found")
 			}
+			log.Printf("[CartReadModel] Error scanning cart %s: %v", aggregateID, err)
 			return appErrors.QueryError.Wrap(err, "failed to get cart")
 		}
+		log.Printf("[CartReadModel] Found cart %s, version=%d", aggregateID, cartView.Version)
 
 		if purchasedAt.Valid {
 			cartView.PurchasedAt = &purchasedAt.Time
@@ -69,13 +76,16 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 			WHERE cart_id = ?
 		`
 
+		log.Printf("[CartReadModel] Executing cart items query for %s", aggregateID)
 		rows, err := tx.QueryContext(ctx, itemsQuery, aggregateID)
 		if err != nil {
+			log.Printf("[CartReadModel] Error querying cart items for %s: %v", aggregateID, err)
 			return appErrors.QueryError.Wrap(err, "failed to get cart items")
 		}
 		defer rows.Close()
 
 		var items []dto.CartItemViewDTO
+		itemCount := 0
 		for rows.Next() {
 			var item dto.CartItemViewDTO
 			err := rows.Scan(
@@ -85,15 +95,19 @@ func (c *CartReadModelImpl) Get(ctx context.Context, aggregateID string) (*dto.C
 				&item.Price,
 			)
 			if err != nil {
+				log.Printf("[CartReadModel] Error scanning cart item: %v", err)
 				return appErrors.QueryError.Wrap(err, "failed to scan cart item")
 			}
 			items = append(items, item)
+			itemCount++
 		}
 
 		if err := rows.Err(); err != nil {
+			log.Printf("[CartReadModel] Rows iteration error: %v", err)
 			return appErrors.QueryError.Wrap(err, "rows iteration error")
 		}
 
+		log.Printf("[CartReadModel] Retrieved %d items for cart %s", itemCount, aggregateID)
 		cartView.Items = items
 		cart = &cartView
 		return nil
