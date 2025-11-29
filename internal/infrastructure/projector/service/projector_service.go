@@ -55,7 +55,6 @@ func NewProjectorService(cfg *config.Config) (*ProjectorService, error) {
 		kafkaConsumer: kafkaConsumer,
 	}
 
-	// Add projector handler to consumer
 	kafkaConsumer.AddHandler(service.handleMessage)
 
 	return service, nil

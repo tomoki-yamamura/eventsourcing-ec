@@ -10,10 +10,14 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/eventstore/deserializer"
 	outboxRepo "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/outbox"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/delayqueue"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 	outboxPublisher "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/outbox"
 	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/readmodel/cart"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber"
+	cartAbandonmentService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber/service"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore"
 	queryUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
@@ -29,15 +33,18 @@ type Container struct {
 	OutboxRepo   repository.OutboxRepository
 	Deserializer repository.EventDeserializer
 
-	// Messaging (interfaces only)
+	// Messaging
 	OutboxPublisher messaging.OutboxPublisher
 
 	// Read model
 	CartStore readmodelstore.CartStore
 
-	// Use case layer (CQRS)
+	// Use case layer
 	CartAddItemCommand commandUseCase.CartAddItemCommandInterface
 	GetCartQuery       queryUseCase.GetCartQueryInterface
+
+	// Services
+	CartAbandonmentService gateway.CartAbandonmentService
 }
 
 func NewContainer() *Container {
@@ -74,6 +81,27 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	// Read model and queries
 	c.CartStore = cartReadModel.NewCartReadModel(c.Transaction)
 	c.GetCartQuery = queryUseCase.NewGetCartQuery(c.CartStore)
+
+	// Cart abandonment service
+	delayQueue := delayqueue.NewMemoryDelayQueue()
+	cartAbandonmentSubscriber := subscriber.NewCartAbandonmentSubscriber(
+		c.Transaction,
+		c.EventStore,
+		delayQueue,
+	)
+	
+	topics := []string{"ec.cart-events"}
+	kafkaConsumer, err := kafka.NewConsumerGroup(cfg.KafkaConfig.Brokers, "cart-abandonment-group", topics, c.Deserializer)
+	if err != nil {
+		return err
+	}
+
+	c.CartAbandonmentService = cartAbandonmentService.NewCartAbandonmentService(
+		c.Deserializer,
+		cartAbandonmentSubscriber,
+		kafkaConsumer,
+		delayQueue,
+	)
 
 	return nil
 }

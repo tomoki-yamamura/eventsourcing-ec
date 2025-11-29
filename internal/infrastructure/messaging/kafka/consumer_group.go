@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"sync"
 
 	"github.com/IBM/sarama"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
@@ -19,7 +18,6 @@ type ConsumerGroup struct {
 	topics        []string
 	handlers      []MessageHandler
 	deserializer  repository.EventDeserializer
-	mu            sync.RWMutex
 	consumerGroup sarama.ConsumerGroup
 }
 
@@ -45,8 +43,6 @@ func NewConsumerGroup(brokers []string, groupID string, topics []string, deseria
 }
 
 func (c *ConsumerGroup) AddHandler(handler MessageHandler) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.handlers = append(c.handlers, handler)
 }
 
@@ -85,12 +81,7 @@ func (c *ConsumerGroup) handleMessage(ctx context.Context, message *sarama.Consu
 		return nil
 	}
 
-	c.mu.RLock()
-	handlers := make([]MessageHandler, len(c.handlers))
-	copy(handlers, c.handlers)
-	c.mu.RUnlock()
-
-	for _, handler := range handlers {
+	for _, handler := range c.handlers {
 		if err := handler(ctx, &msg); err != nil {
 			log.Printf("Error handling message: %v", err)
 		}

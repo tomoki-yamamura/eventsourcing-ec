@@ -18,30 +18,25 @@ import (
 func main() {
 	fmt.Println("Starting Event Sourcing E-Commerce Application")
 
-	// Load config
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Setup context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// DI Container setup
 	cont := container.NewContainer()
 	if err := cont.Inject(ctx, cfg); err != nil {
 		log.Fatalf("Failed to inject dependencies: %v", err)
 	}
 
-	// Start background workers
 	go func() {
 		if err := cont.OutboxPublisher.Start(ctx); err != nil {
 			log.Printf("Outbox publisher stopped: %v", err)
 		}
 	}()
 
-	// Start projector service
 	go func() {
 		projService, err := projectorService.NewProjectorService(cfg)
 		if err != nil {
@@ -53,18 +48,20 @@ func main() {
 		}
 	}()
 
+	go func() {
+		if err := cont.CartAbandonmentService.Start(ctx); err != nil {
+			log.Printf("Cart abandonment service stopped: %v", err)
+		}
+	}()
 	log.Println("Background workers started successfully")
 
-	// Setup handlers and router
 	handlerRegister := register.NewHandlerRegister(cont)
 	appRouter := handlerRegister.SetupRouter()
 	mux := appRouter.SetupRoutes()
 
-	// Setup graceful shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	// Start HTTP server in a goroutine
 	server := &http.Server{
 		Addr:    ":" + cfg.HTTPPort,
 		Handler: mux,
@@ -77,14 +74,10 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal
 	<-c
 	fmt.Println("\nReceived shutdown signal, gracefully shutting down...")
-
-	// Cancel context to stop workers
 	cancel()
 
-	// Shutdown HTTP server
 	if err := server.Shutdown(context.Background()); err != nil {
 		log.Printf("Server shutdown error: %v", err)
 	}

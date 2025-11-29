@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/IBM/sarama"
 	appErrors "github.com/tomoki-yamamura/eventsourcing-ec/internal/errors"
@@ -59,6 +60,10 @@ func (p *Producer) PublishMessage(topic string, key string, message *messaging.M
 	}
 
 	return nil
+}
+
+func (p *Producer) PublishDelayedMessage(topic, key string, message *messaging.Message, delay time.Duration) error {
+	return appErrors.Unknown.New("delayed message publishing not supported by Kafka producer")
 }
 
 func (p *Producer) Close() error {

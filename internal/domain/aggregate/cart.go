@@ -89,7 +89,7 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 	a.items = append(a.items, cartItem)
 
 	a.version++
-	evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, cmd.Name, price.Float64())
+	evt := event.NewItemAddedToCartEvent(a.aggregateID, a.version, cmd.ItemID, cmd.Name, price.Float64(), cmd.TenantID)
 	a.uncommittedEvents = append(a.uncommittedEvents, evt)
 
 	return nil

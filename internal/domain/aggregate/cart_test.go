@@ -319,7 +319,7 @@ func TestCartAggregate_Hydration(t *testing.T) {
 		"should hydrate cart with full event sequence": {
 			events: []event.Event{
 				event.NewCartCreatedEvent(cartID, 1, userID),
-				event.NewItemAddedToCartEvent(cartID, 2, itemID, "Test Item", 50.0),
+				event.NewItemAddedToCartEvent(cartID, 2, itemID, "Test Item", 50.0, uuid.New()),
 				event.NewCartSubmittedEvent(cartID, 3, 50.0),
 			},
 			wantVersion: 3,
@@ -327,16 +327,16 @@ func TestCartAggregate_Hydration(t *testing.T) {
 		"should handle adding same item multiple times": {
 			events: []event.Event{
 				event.NewCartCreatedEvent(cartID, 1, userID),
-				event.NewItemAddedToCartEvent(cartID, 2, itemID, "Same Item First", 50.0),
-				event.NewItemAddedToCartEvent(cartID, 3, itemID, "Same Item Second", 50.0),
+				event.NewItemAddedToCartEvent(cartID, 2, itemID, "Same Item First", 50.0, uuid.New()),
+				event.NewItemAddedToCartEvent(cartID, 3, itemID, "Same Item Second", 50.0, uuid.New()),
 			},
 			wantVersion: 3,
 		},
 		"should handle multiple different items": {
 			events: []event.Event{
 				event.NewCartCreatedEvent(cartID, 1, userID),
-				event.NewItemAddedToCartEvent(cartID, 2, itemID, "First Item", 50.0),
-				event.NewItemAddedToCartEvent(cartID, 3, uuid.New(), "Second Item", 25.0),
+				event.NewItemAddedToCartEvent(cartID, 2, itemID, "First Item", 50.0, uuid.New()),
+				event.NewItemAddedToCartEvent(cartID, 3, uuid.New(), "Second Item", 25.0, uuid.New()),
 			},
 			wantVersion: 3,
 		},
