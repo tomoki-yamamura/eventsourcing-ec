@@ -47,82 +47,74 @@ func (a *TenantCartAbandonedPolicyAggregate) Hydration(events []event.Event) err
 }
 
 func (a *TenantCartAbandonedPolicyAggregate) apply(ev event.Event) {
-	switch ev.(type) {
-	// TODO: イベントが実装されたら追加
-	// case *event.TenantPolicyCreated:
-	// 	a.tenantID = e.GetAggregateID()
-	// 	a.cartAbandonedMinutes = e.CartAbandonedMinutes
-	// 	a.version = e.GetVersion()
-	// case *event.CartAbandonedPolicyChanged:
-	// 	a.cartAbandonedMinutes = e.NewMinutes
-	// 	a.version = e.GetVersion()
+	switch e := ev.(type) {
+	case *event.TenantCartAbandonedPolicyCreatedEvent:
+		a.tenantID = e.GetAggregateID()
+		a.title = e.GetTitle()
+		a.cartAbandonedMinutes = e.GetAbandonedMinutes()
+		a.quietTimeFrom = e.GetQuietTimeFrom()
+		a.quietTimeTo = e.GetQuietTimeTo()
+		a.version = e.GetVersion()
+	case *event.TenantCartAbandonedPolicyUpdatedEvent:
+		a.title = e.GetTitle()
+		a.cartAbandonedMinutes = e.GetAbandonedMinutes()
+		a.quietTimeFrom = e.GetQuietTimeFrom()
+		a.quietTimeTo = e.GetQuietTimeTo()
+		a.version = e.GetVersion()
 	default:
-		// 未知のイベントは無視
 	}
 }
 
-// CartAbandonedDelay はドメインロジックで使う値
 func (a *TenantCartAbandonedPolicyAggregate) CartAbandonedDelay() time.Duration {
 	return time.Duration(a.cartAbandonedMinutes) * time.Minute
 }
 
-// IsWithinQuietTime 現在時刻が配信停止時間帯かどうかを判定
 func (a *TenantCartAbandonedPolicyAggregate) IsWithinQuietTime(now time.Time) (bool, error) {
 	if a.quietTimeFrom.IsZero() || a.quietTimeTo.IsZero() {
 		return false, nil
 	}
 
-	// 現在時刻とquietTimeをUTCで比較
 	nowUTC := now.UTC()
 	fromUTC := a.quietTimeFrom.UTC()
 	toUTC := a.quietTimeTo.UTC()
 
-	// 時間のみを比較するため、同じ日付で時刻のみを抽出
 	currentMinutes := nowUTC.Hour()*60 + nowUTC.Minute()
 	fromMinutes := fromUTC.Hour()*60 + fromUTC.Minute()
 	toMinutes := toUTC.Hour()*60 + toUTC.Minute()
 
 	if fromMinutes < toMinutes {
-		// 例: 01:00〜05:00
 		return currentMinutes >= fromMinutes && currentMinutes < toMinutes, nil
 	} else if fromMinutes > toMinutes {
-		// 例: 22:00〜08:00（またぎパターン）
 		return currentMinutes >= fromMinutes || currentMinutes < toMinutes, nil
 	} else {
-		// from == to の場合は無効扱い
 		return false, nil
 	}
 }
 
-// ExecuteCreateTenantCartAbandonedPolicyCommand 初回作成コマンドを実行
 func (a *TenantCartAbandonedPolicyAggregate) ExecuteCreateTenantCartAbandonedPolicyCommand(cmd command.CreateTenantCartAbandonedPolicyCommand) error {
 	if a.version != -1 {
 		return errors.UnpermittedOp.New("tenant policy already exists")
 	}
 
-	// 直接状態を更新（イベントは後で実装）
-	a.tenantID = cmd.TenantID
-	a.title = cmd.Title
-	a.cartAbandonedMinutes = cmd.AbandonedMinutes
-	a.quietTimeFrom = cmd.QuietTimeFrom
-	a.quietTimeTo = cmd.QuietTimeTo
-	a.version = 1
-
-	// TODO: イベントが実装されたら追加
-	// ev := event.NewTenantPolicyCreated(tenantID, 1, title, minutes, quietFrom, quietTo, timezone)
-	// a.apply(ev)
-	// a.uncommitted = append(a.uncommitted, ev)
+	ev := event.NewTenantCartAbandonedPolicyCreatedEvent(
+		cmd.TenantID,
+		1,
+		cmd.Title,
+		cmd.AbandonedMinutes,
+		cmd.QuietTimeFrom,
+		cmd.QuietTimeTo,
+	)
+	a.apply(ev)
+	a.uncommitted = append(a.uncommitted, ev)
 
 	return nil
 }
 
-// ExecuteUpdateTenantCartAbandonedPolicyCommand 更新コマンドを実行
 func (a *TenantCartAbandonedPolicyAggregate) ExecuteUpdateTenantCartAbandonedPolicyCommand(cmd command.UpdateTenantCartAbandonedPolicyCommand) error {
 	if a.version == -1 {
 		return errors.UnpermittedOp.New("tenant policy not created")
 	}
 
-	// 変更がない場合はイベントを出さない
 	if a.title == cmd.Title &&
 		a.cartAbandonedMinutes == cmd.AbandonedMinutes &&
 		a.quietTimeFrom.Equal(cmd.QuietTimeFrom) &&
@@ -130,17 +122,16 @@ func (a *TenantCartAbandonedPolicyAggregate) ExecuteUpdateTenantCartAbandonedPol
 		return nil
 	}
 
-	// 直接状態を更新（イベントは後で実装）
-	a.title = cmd.Title
-	a.cartAbandonedMinutes = cmd.AbandonedMinutes
-	a.quietTimeFrom = cmd.QuietTimeFrom
-	a.quietTimeTo = cmd.QuietTimeTo
-	a.version++
-
-	// TODO: イベントが実装されたら追加
-	// ev := event.NewTenantPolicyUpdated(a.tenantID, a.version, title, minutes, quietFrom, quietTo, timezone)
-	// a.apply(ev)
-	// a.uncommitted = append(a.uncommitted, ev)
+	ev := event.NewTenantCartAbandonedPolicyUpdatedEvent(
+		a.tenantID,
+		a.version+1,
+		cmd.Title,
+		cmd.AbandonedMinutes,
+		cmd.QuietTimeFrom,
+		cmd.QuietTimeTo,
+	)
+	a.apply(ev)
+	a.uncommitted = append(a.uncommitted, ev)
 
 	return nil
 }

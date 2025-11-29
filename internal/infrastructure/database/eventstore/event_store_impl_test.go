@@ -167,7 +167,6 @@ func TestEventStore_SaveEvents(t *testing.T) {
 
 			err := store.SaveEvents(ctx, testAggregateID, tt.events)
 
-			// 明示的にrollbackしてテストデータをclean up
 			rollbackErr := tx.Rollback()
 			require.NoError(t, rollbackErr)
 
@@ -242,7 +241,6 @@ func TestEventStore_LoadEvents(t *testing.T) {
 			// Act
 			loadedEvents, err := store.LoadEvents(ctx, tt.aggregateID)
 
-			// 明示的にrollbackしてテストデータをclean up
 			rollbackErr := tx.Rollback()
 			require.NoError(t, rollbackErr)
 
