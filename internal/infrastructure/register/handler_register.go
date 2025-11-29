@@ -20,10 +20,12 @@ func NewHandlerRegister(container *container.Container) *HandlerRegister {
 func (r *HandlerRegister) SetupRouter() *router.Router {
 	// Command handlers
 	addItemCommandHandler := command.NewCartAddItemCommandHandler(r.container.CartAddItemCommand)
+	createTenantPolicyCommandHandler := command.NewCreateTenantCartAbandonedPolicyCommandHandler(r.container.CreateTenantCartAbandonedPolicyCommand)
+	updateTenantPolicyCommandHandler := command.NewUpdateTenantCartAbandonedPolicyCommandHandler(r.container.UpdateTenantCartAbandonedPolicyCommand)
 
 	// Query handlers
 	getCartQueryHandler := query.NewGetCartQueryHandler(r.container.GetCartQuery)
 
 	// Router setup
-	return router.NewRouter(addItemCommandHandler, getCartQueryHandler)
+	return router.NewRouter(addItemCommandHandler, getCartQueryHandler, createTenantPolicyCommandHandler, updateTenantPolicyCommandHandler)
 }

@@ -53,8 +53,10 @@ type Container struct {
 	ProjectorConsumer       messaging.ConsumerGroup
 
 	// Use case layer
-	CartAddItemCommand commandUseCase.CartAddItemCommandInterface
-	GetCartQuery       queryUseCase.GetCartQueryInterface
+	CartAddItemCommand                      commandUseCase.CartAddItemCommandInterface
+	CreateTenantCartAbandonedPolicyCommand  commandUseCase.CreateTenantCartAbandonedPolicyCommandInterface
+	UpdateTenantCartAbandonedPolicyCommand  commandUseCase.UpdateTenantCartAbandonedPolicyCommandInterface
+	GetCartQuery                           queryUseCase.GetCartQueryInterface
 
 	// Services
 	CartAbandonmentService gateway.CartAbandonmentService
@@ -93,6 +95,8 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 	)
 
 	c.CartAddItemCommand = commandUseCase.NewCartAddItemCommand(c.Transaction, c.EventStore, c.OutboxRepo)
+	c.CreateTenantCartAbandonedPolicyCommand = commandUseCase.NewCreateTenantCartAbandonedPolicyCommand(c.Transaction, c.EventStore, c.OutboxRepo)
+	c.UpdateTenantCartAbandonedPolicyCommand = commandUseCase.NewUpdateTenantCartAbandonedPolicyCommand(c.Transaction, c.EventStore, c.OutboxRepo)
 
 	// Read model and queries
 	c.CartStore = cartReadModel.NewCartReadModel(c.Transaction)
