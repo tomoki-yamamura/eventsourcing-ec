@@ -50,18 +50,6 @@ tasks:
         goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
 
-  migrate:eventstore:status:
-    desc: Check event store migration status
-    cmds:
-      - |
-        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
-        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
-
-  migrate:eventstore:create:
-    desc: Create new event store migration (usage{{":"}} task migrate{{":"}}eventstore{{":"}}create -- migration_name)
-    cmds:
-      - goose -dir internal/infrastructure/database/eventstore/migration create {{.CLI_ARGS}} sql
-
   migrate:readmodel:up:
     desc: Run read model migrations up
     cmds:
@@ -75,18 +63,6 @@ tasks:
       - |
         goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" down
-
-  migrate:readmodel:status:
-    desc: Check read model migration status
-    cmds:
-      - |
-        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
-        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_DATABASE}?parseTime=true&charset=utf8mb4" status
-
-  migrate:readmodel:create:
-    desc: Create new read model migration (usage{{":"}} task migrate{{":"}}readmodel{{":"}}create -- migration_name)
-    cmds:
-      - goose -dir internal/infrastructure/database/readmodel/migrations create {{.CLI_ARGS}} sql
 
   # Test Database Migrations
   migrate:test:eventstore:up:
@@ -103,17 +79,13 @@ tasks:
         goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
-  migrate:up:
-    desc: Run all migrations up (both eventstore and readmodel)
-    deps: [migrate:eventstore:up, migrate:readmodel:up]
-
-  migrate:down:
-    desc: Run all migrations down (both eventstore and readmodel) 
-    deps: [migrate:readmodel:down, migrate:eventstore:down]
-
-  migrate:test:up:
-    desc: Run all migrations up for test database
-    deps: [migrate:test:eventstore:up, migrate:test:readmodel:up]
+  migrate:all:up:
+    desc: Run all migrations up (main and test databases for both eventstore and readmodel)
+    cmds:
+      - task: migrate:eventstore:up
+      - task: migrate:readmodel:up
+      - task: migrate:test:eventstore:up
+      - task: migrate:test:readmodel:up
 
   db:setup:
     desc: Setup both main and test databases with migrations
