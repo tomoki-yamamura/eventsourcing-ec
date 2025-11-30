@@ -53,8 +53,7 @@ The application follows **Clean Architecture** principles with Event Sourcing:
 3. **Run database migrations:**
 
    ```bash
-   task migrate:up
-   task migrate:test:up
+   task migrate:all:up
    ```
 
 4. **Verify setup:**
@@ -93,18 +92,22 @@ The application follows **Clean Architecture** principles with Event Sourcing:
 - `task migrate:eventstore:status` - Check migration status
 - `task migrate:eventstore:create -- migration_name` - Create new migration
 
-#### Read Model (Projector) Migrations
+#### Read Model Migrations
 
-- `task migrate:projector:up` - Run read model migrations
-- `task migrate:projector:down` - Rollback read model migrations
-- `task migrate:projector:status` - Check migration status
-- `task migrate:projector:create -- migration_name` - Create new migration
+- `task migrate:readmodel:up` - Run read model migrations
+- `task migrate:readmodel:down` - Rollback read model migrations
+
+#### Test Database Migrations
+
+- `task migrate:test:eventstore:up` - Run event store migrations for test database
+- `task migrate:test:eventstore:down` - Rollback event store migrations for test database
+- `task migrate:test:readmodel:up` - Run read model migrations for test database
+- `task migrate:test:readmodel:down` - Rollback read model migrations for test database
 
 #### Combined Commands
 
-- `task migrate:up` - Run all migrations (eventstore + projector)
-- `task migrate:down` - Rollback all migrations
-- `task migrate:test:up` - Run all migrations for test database
+- `task migrate:all:up` - Run all migrations (eventstore + readmodel for both main and test databases)
+- `task migrate:all:down` - Rollback all migrations (eventstore + readmodel for both main and test databases)
 
 ---
 
@@ -115,49 +118,74 @@ The application provides RESTful APIs for cart management:
 ### Add Item to Cart
 
 ```bash
-POST /additem/{aggregate_id}
+POST /carts/{aggregate_id}/items
 ```
 
 **Request body:**
 
 ```json
 {
-  "user_id": "user-123",
-  "item_id": "item-456",
-  "quantity": 2,
-  "price": 29.99
+  "user_id": "123e4567-e89b-12d3-a456-426614174001",
+  "item_id": "123e4567-e89b-12d3-a456-426614174002",
+  "name": "Test Product",
+  "price": 29.99,
+  "tenant_id": "123e4567-e89b-12d3-a456-426614174003"
 }
 ```
 
 **Example:**
 
 ```bash
-curl -X POST "http://localhost:8080/additem/550e8400-e29b-41d4-a716-446655440000" \
+curl -X POST "http://localhost:8080/carts/550e8400-e29b-41d4-a716-446655440000/items" \
   -H "Content-Type: application/json" \
   -d '{
-    "user_id": "user-123",
-    "item_id": "item-456",
-    "quantity": 2,
-    "price": 29.99
+    "user_id": "123e4567-e89b-12d3-a456-426614174001",
+    "item_id": "123e4567-e89b-12d3-a456-426614174002",
+    "name": "Test Product",
+    "price": 29.99,
+    "tenant_id": "123e4567-e89b-12d3-a456-426614174003"
   }'
 ```
 
-**Response:**
+### Get Cart
+
+```bash
+GET /carts/{aggregate_id}
+```
+
+**Example:**
+
+```bash
+curl -X GET "http://localhost:8080/carts/550e8400-e29b-41d4-a716-446655440000"
+```
+
+### Create Tenant Cart Abandonment Policy
+
+```bash
+POST /tenants/{aggregate_id}/cart-abandoned-policies
+```
+
+**Request body:**
 
 ```json
 {
-  "aggregate_id": "550e8400-e29b-41d4-a716-446655440000",
-  "version": 2,
-  "events": [
-    {
-      "type": "ItemAddedToCart",
-      "version": 2,
-      "occurred_at": "2025-11-20T16:30:00Z"
-    }
-  ],
-  "status": "success",
-  "executed_at": "2025-11-20T16:30:00Z"
+  "title": "Standard Cart Abandonment Policy",
+  "abandoned_minutes": 30,
+  "quiet_time_from": "22:00:00",
+  "quiet_time_to": "08:00:00"
 }
+```
+
+### Update Tenant Cart Abandonment Policy
+
+```bash
+PUT /tenants/{aggregate_id}/cart-abandoned-policies
+```
+
+### Get Tenant Cart Abandonment Policy
+
+```bash
+GET /tenants/{aggregate_id}/cart-abandoned-policies
 ```
 
 ---

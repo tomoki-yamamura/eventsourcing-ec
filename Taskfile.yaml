@@ -79,6 +79,20 @@ tasks:
         goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
         "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" up
 
+  migrate:test:eventstore:down:
+    desc: Run event store migrations down for test database
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/eventstore/migration -table goose_db_version_eventstore mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" down
+
+  migrate:test:readmodel:down:
+    desc: Run read model migrations down for test database
+    cmds:
+      - |
+        goose -dir internal/infrastructure/database/readmodel/migrations -table goose_db_version_readmodel mysql \
+        "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true&charset=utf8mb4" down
+
   migrate:all:up:
     desc: Run all migrations up (main and test databases for both eventstore and readmodel)
     cmds:
@@ -86,6 +100,14 @@ tasks:
       - task: migrate:readmodel:up
       - task: migrate:test:eventstore:up
       - task: migrate:test:readmodel:up
+
+  migrate:all:down:
+    desc: Run all migrations down (main and test databases for both eventstore and readmodel)
+    cmds:
+      - task: migrate:test:readmodel:down
+      - task: migrate:test:eventstore:down
+      - task: migrate:readmodel:down
+      - task: migrate:eventstore:down
 
   db:setup:
     desc: Setup both main and test databases with migrations
