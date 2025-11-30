@@ -61,11 +61,12 @@ func TestSubmitCartCommand_Execute(t *testing.T) {
 			addItemCmd := command.NewCartAddItemCommand(txRepo, eventStore, outboxRepo)
 			addItemPresenter := &submitTestPresenter{}
 			err := addItemCmd.Execute(context.Background(), &input.AddItemToCartInput{
-				CartID: tt.input.CartID,
-				UserID: uuid.New().String(),
-				ItemID: uuid.New().String(),
-				Name:   "Test Item",
-				Price:  100.0,
+				CartID:   tt.input.CartID,
+				UserID:   uuid.New().String(),
+				ItemID:   uuid.New().String(),
+				Name:     "Test Item",
+				Price:    100.0,
+				TenantID: uuid.New().String(),
 			}, addItemPresenter)
 			require.NoError(t, err)
 

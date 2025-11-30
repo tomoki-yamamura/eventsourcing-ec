@@ -43,11 +43,12 @@ func TestCartAddItemCommand_Execute(t *testing.T) {
 	}{
 		"add item to new cart": {
 			input: &input.AddItemToCartInput{
-				CartID: uuid.New().String(),
-				UserID: uuid.New().String(),
-				ItemID: uuid.New().String(),
-				Name:   "Test Item",
-				Price:  100.0,
+				CartID:   uuid.New().String(),
+				UserID:   uuid.New().String(),
+				ItemID:   uuid.New().String(),
+				Name:     "Test Item",
+				Price:    100.0,
+				TenantID: uuid.New().String(),
 			},
 			expectedEventCount: 0,
 			expectedVersion:    2,

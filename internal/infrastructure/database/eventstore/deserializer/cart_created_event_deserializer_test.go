@@ -19,6 +19,7 @@ func TestCartCreatedEventDeserializer(t *testing.T) {
 			input: []byte(`{
 				"AggregateID": "123e4567-e89b-12d3-a456-426614174000",
 				"UserID": "123e4567-e89b-12d3-a456-426614174001",
+				"TenantID": "123e4567-e89b-12d3-a456-426614174003",
 				"EventID": "123e4567-e89b-12d3-a456-426614174002",
 				"Timestamp": "2023-01-01T10:00:00Z",
 				"Version": 1
@@ -26,6 +27,7 @@ func TestCartCreatedEventDeserializer(t *testing.T) {
 			want: &event.CartCreatedEvent{
 				AggregateID: uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
 				UserID:      uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"),
+				TenantID:    uuid.MustParse("123e4567-e89b-12d3-a456-426614174003"),
 				EventID:     uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"),
 				Timestamp:   time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC),
 				Version:     1,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
@@ -96,11 +97,13 @@ func TestCartReadModel_Upsert(t *testing.T) {
 			cartData: &dto.CartViewDTO{
 				ID:          testCartID,
 				UserID:      "user123",
-				Status:      "active",
+				TenantID:    "tenant123",
+				Status:      "OPEN",
 				TotalAmount: 100.0,
 				ItemCount:   2,
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
+				PurchasedAt: nil, // explicitly set to nil
 				Version:     1,
 				Items: []dto.CartItemViewDTO{
 					{
@@ -118,19 +121,32 @@ func TestCartReadModel_Upsert(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			dbClient := newTestDBClient(t)
-			ctx, tx := beginTxCtx(t, dbClient)
 			store := cart.NewCartReadModel(transaction.NewTransaction(dbClient.GetDB()))
+			
+			// Use unique ID for each test run
+			uniqueCartID := uuid.New().String()
+			tt.cartData.ID = uniqueCartID
+			// Also update cart items to use the unique cart ID
+			for i := range tt.cartData.Items {
+				tt.cartData.Items[i].CartID = uniqueCartID
+			}
 
-			err := store.Upsert(ctx, testCartID, tt.cartData)
-
-			rollbackErr := tx.Rollback()
-			require.NoError(t, rollbackErr)
+			err := store.Upsert(context.Background(), uniqueCartID, tt.cartData)
 
 			if tt.wantError {
 				require.Error(t, err)
 			} else {
+				if err != nil {
+					t.Logf("Detailed error: %+v", err)
+				}
 				require.NoError(t, err)
 			}
+			
+			// Cleanup
+			t.Cleanup(func() {
+				_, _ = dbClient.GetDB().Exec("DELETE FROM cart_items WHERE cart_id = ?", uniqueCartID)
+				_, _ = dbClient.GetDB().Exec("DELETE FROM carts WHERE id = ?", uniqueCartID)
+			})
 		})
 	}
 }
