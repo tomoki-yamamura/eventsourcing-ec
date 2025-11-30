@@ -9,15 +9,17 @@ import (
 type CartCreatedEvent struct {
 	AggregateID uuid.UUID
 	UserID      uuid.UUID
+	TenantID    uuid.UUID
 	EventID     uuid.UUID
 	Timestamp   time.Time
 	Version     int
 }
 
-func NewCartCreatedEvent(aggregateID uuid.UUID, version int, userID uuid.UUID) *CartCreatedEvent {
+func NewCartCreatedEvent(aggregateID uuid.UUID, version int, userID uuid.UUID, tenantID uuid.UUID) *CartCreatedEvent {
 	return &CartCreatedEvent{
 		AggregateID: aggregateID,
 		UserID:      userID,
+		TenantID:    tenantID,
 		EventID:     uuid.New(),
 		Timestamp:   time.Now(),
 		Version:     version,
@@ -50,4 +52,8 @@ func (e CartCreatedEvent) GetAggregateType() string {
 
 func (e *CartCreatedEvent) GetUserID() uuid.UUID {
 	return e.UserID
+}
+
+func (e *CartCreatedEvent) GetTenantID() uuid.UUID {
+	return e.TenantID
 }

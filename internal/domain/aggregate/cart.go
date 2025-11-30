@@ -26,6 +26,7 @@ const (
 type CartAggregate struct {
 	aggregateID       uuid.UUID
 	userID            uuid.UUID
+	tenantID          uuid.UUID
 	items             []*entity.CartItem
 	status            CartStatus
 	version           int
@@ -73,10 +74,11 @@ func (a *CartAggregate) ExecuteAddItemToCartCommand(cmd command.AddItemToCartCom
 	if a.isNew() {
 		a.aggregateID = cmd.CartID
 		a.userID = cmd.UserID
+		a.tenantID = cmd.TenantID
 		a.status = CartStatusOpen
 		a.version = 1
 
-		evt := event.NewCartCreatedEvent(a.aggregateID, a.version, a.userID)
+		evt := event.NewCartCreatedEvent(a.aggregateID, a.version, a.userID, a.tenantID)
 		a.uncommittedEvents = append(a.uncommittedEvents, evt)
 	}
 
@@ -132,6 +134,7 @@ func (a *CartAggregate) Hydration(events []event.Event) error {
 		case *event.CartCreatedEvent:
 			a.aggregateID = e.GetAggregateID()
 			a.userID = e.GetUserID()
+			a.tenantID = e.GetTenantID()
 			a.status = CartStatusOpen
 			a.version = e.GetVersion()
 		case *event.ItemAddedToCartEvent:

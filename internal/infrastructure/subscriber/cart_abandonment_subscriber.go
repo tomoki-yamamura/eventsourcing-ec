@@ -83,7 +83,6 @@ func (s *CartAbandonmentSubscriber) scheduleCartAbandonmentCheck(ctx context.Con
 		Version:     itemAdded.GetVersion(),
 	}
 
-	log.Printf("Scheduling cart abandonment check for cart %s in %v", cartID, delay)
 	return s.delayQueue.PublishDelayedMessage("cart-abandonment-check", cartID.String(), delayedMessage, delay)
 }
 

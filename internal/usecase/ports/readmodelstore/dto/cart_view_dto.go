@@ -7,6 +7,7 @@ import (
 type CartViewDTO struct {
 	ID          string            `json:"id"`
 	UserID      string            `json:"user_id"`
+	TenantID    string            `json:"tenant_id"`
 	Status      string            `json:"status"`
 	TotalAmount float64           `json:"total_amount"`
 	ItemCount   int               `json:"item_count"`

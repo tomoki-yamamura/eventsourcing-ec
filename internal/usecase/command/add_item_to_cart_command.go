@@ -56,6 +56,11 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 				return err
 			}
 
+			tenantUUID, err := uuid.Parse(input.TenantID)
+			if err != nil {
+				return err
+			}
+
 			loadedEvents, err := u.eventStore.LoadEvents(ctx, cartUUID)
 			if err != nil && !errors.IsCode(err, errors.NotFound) {
 				return err
@@ -69,11 +74,12 @@ func (u *CartAddItemCommand) Execute(ctx context.Context, input *input.AddItemTo
 			}
 
 			cmd := command.AddItemToCartCommand{
-				CartID: cartUUID,
-				UserID: userUUID,
-				ItemID: itemUUID,
-				Name:   input.Name,
-				Price:  input.Price,
+				CartID:   cartUUID,
+				UserID:   userUUID,
+				ItemID:   itemUUID,
+				Name:     input.Name,
+				Price:    input.Price,
+				TenantID: tenantUUID,
 			}
 
 			if err := cart.ExecuteAddItemToCartCommand(cmd); err != nil {

@@ -50,7 +50,7 @@ func (q *MemoryDelayQueue) PublishDelayedMessage(topic, key string, message *dto
 func (q *MemoryDelayQueue) Start(ctx context.Context) error {
 	log.Println("Starting Memory Delay Queue...")
 
-	ticker := time.NewTicker(5 * time.Second) // 5秒ごとにチェック
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	for {
