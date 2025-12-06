@@ -84,46 +84,18 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 			continue
 		}
 
-		message := &dto.Message{
-			ID:          outboxEvent.EventID,
-			Type:        outboxEvent.EventType,
-			Data:        json.RawMessage(outboxEvent.EventData),
-			AggregateID: outboxEvent.AggregateID,
-			Version:     outboxEvent.Version,
-		}
-
-		topic := op.topicRouter.TopicFor(outboxEvent.EventType, outboxEvent.AggregateType)
-		if err := op.publishMessage(topic, outboxEvent.AggregateID.String(), message); err != nil {
-			log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
-
-			if txErr := op.tx.RWTx(ctx, func(ctx context.Context) error {
-				if markErr := op.outboxRepo.MarkAsFailed(ctx, outboxEvent.EventID, err.Error()); markErr != nil {
-					log.Printf("Failed to mark event as failed: %v", markErr)
-				}
-				if retryErr := op.outboxRepo.IncrementRetryCount(ctx, outboxEvent.EventID); retryErr != nil {
-					log.Printf("Failed to increment retry count: %v", retryErr)
-				}
-				return nil
-			}); txErr != nil {
-				log.Printf("Transaction failed while handling publish error for event %s: %v", outboxEvent.EventID, txErr)
-			}
+		if err := op.handlerSingleEvent(ctx, outboxEvent); err != nil {
 			continue
 		}
 
 		publishedEventIDs = append(publishedEventIDs, outboxEvent.EventID)
-		log.Printf("Successfully published event %s to topic %s", outboxEvent.EventID, topic)
 	}
 
-	// Mark all successfully published events in a single transaction
-	if len(publishedEventIDs) > 0 {
-		err := op.tx.RWTx(ctx, func(ctx context.Context) error {
-			return op.outboxRepo.MarkAsPublished(ctx, publishedEventIDs)
-		})
-		if err != nil {
-			log.Printf("Failed to mark events as published: %v", err)
-			return err
-		}
-		log.Printf("Marked %d events as published", len(publishedEventIDs))
+	if err := op.tx.RWTx(ctx, func(ctx context.Context) error {
+		return op.outboxRepo.MarkAsPublished(ctx, publishedEventIDs)
+	}); err != nil {
+		log.Printf("Failed to mark events as published: %v", err)
+		return err
 	}
 
 	return nil
@@ -131,4 +103,44 @@ func (op *OutboxPublisher) publishPendingEvents(ctx context.Context) error {
 
 func (op *OutboxPublisher) publishMessage(topic, key string, message *dto.Message) error {
 	return op.messageProducer.PublishMessage(topic, key, message)
+}
+
+func (op *OutboxPublisher) handlerSingleEvent(ctx context.Context, outboxEvent event.OutboxEvent) error {
+	message := &dto.Message{
+		ID:          outboxEvent.EventID,
+		Type:        outboxEvent.EventType,
+		Data:        json.RawMessage(outboxEvent.EventData),
+		AggregateID: outboxEvent.AggregateID,
+		Version:     outboxEvent.Version,
+	}
+
+	topic := op.topicRouter.TopicFor(outboxEvent.EventType, outboxEvent.AggregateType)
+
+	if err := op.publishMessage(topic, outboxEvent.AggregateType, message); err != nil {
+		log.Printf("Failed to publish event %s: %v", outboxEvent.EventID, err)
+		if err := op.handlePublishError(ctx, outboxEvent.EventID, err); err != nil {
+			return err
+		}
+		return err
+	}
+	log.Printf("Successfully published event %s to topic %s", outboxEvent.EventID, topic)
+	return nil
+}
+
+func (op *OutboxPublisher) handlePublishError(
+	ctx context.Context,
+	eventID uuid.UUID,
+	pubErr error,
+) error {
+	return op.tx.RWTx(ctx, func(ctx context.Context) error {
+		if err := op.outboxRepo.MarkAsFailed(ctx, eventID, pubErr.Error()); err != nil {
+			log.Printf("Failed to mark event %s as failed: %v", eventID, err)
+		}
+
+		if err := op.outboxRepo.IncrementRetryCount(ctx, eventID); err != nil {
+			log.Printf("Failed to increment retry count for event %s: %v", eventID, err)
+		}
+
+		return nil
+	})
 }
