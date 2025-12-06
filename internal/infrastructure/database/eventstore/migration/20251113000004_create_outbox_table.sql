@@ -14,7 +14,6 @@ CREATE TABLE
         status ENUM ('PENDING', 'PUBLISHED', 'FAILED') NOT NULL DEFAULT 'PENDING',
         retry_count INT NOT NULL DEFAULT 0,
         error_message TEXT NULL,
-        -- 🔽 ここを改良
         INDEX idx_status_created_at_id (status, created_at, id),
         INDEX idx_aggregate_id (aggregate_id),
         UNIQUE INDEX unique_event_id (event_id)
