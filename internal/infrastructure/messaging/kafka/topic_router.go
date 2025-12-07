@@ -9,7 +9,7 @@ type StaticMapRouter struct {
 func NewStaticTopicRouter() messaging.TopicRouter {
 	return &StaticMapRouter{
 		aggregateTopicMap: map[string]string{
-			"Cart": "ec.cart-events",
+			"Cart":                      "ec.cart-events",
 			"TenantCartAbandonedPolicy": "ec.cart-events",
 		},
 	}

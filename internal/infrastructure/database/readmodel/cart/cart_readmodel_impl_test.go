@@ -54,7 +54,6 @@ func beginTxCtx(t *testing.T, dbClient *client.Client) (context.Context, *sqlx.T
 }
 
 func TestCartReadModel_Get(t *testing.T) {
-
 	tests := map[string]struct {
 		cartID    string
 		wantError bool
@@ -122,7 +121,7 @@ func TestCartReadModel_Upsert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			dbClient := newTestDBClient(t)
 			store := cart.NewCartReadModel(transaction.NewTransaction(dbClient.GetDB()))
-			
+
 			// Use unique ID for each test run
 			uniqueCartID := uuid.New().String()
 			tt.cartData.ID = uniqueCartID
@@ -141,7 +140,7 @@ func TestCartReadModel_Upsert(t *testing.T) {
 				}
 				require.NoError(t, err)
 			}
-			
+
 			// Cleanup
 			t.Cleanup(func() {
 				_, _ = dbClient.GetDB().Exec("DELETE FROM cart_items WHERE cart_id = ?", uniqueCartID)

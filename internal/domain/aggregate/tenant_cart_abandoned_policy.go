@@ -19,7 +19,6 @@ type TenantCartAbandonedPolicyAggregate struct {
 	uncommitted          []event.Event
 }
 
-
 func NewTenantCartAbandonedPolicyAggregate() *TenantCartAbandonedPolicyAggregate {
 	return &TenantCartAbandonedPolicyAggregate{
 		version:     -1,

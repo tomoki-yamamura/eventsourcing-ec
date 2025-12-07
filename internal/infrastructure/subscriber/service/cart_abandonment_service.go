@@ -11,10 +11,10 @@ import (
 )
 
 type CartAbandonmentService struct {
-	deserializer           repository.EventDeserializer
+	deserializer              repository.EventDeserializer
 	cartAbandonmentSubscriber messaging.Subscriber
-	consumerGroup          messaging.ConsumerGroup
-	delayQueue             messaging.DelayQueue
+	consumerGroup             messaging.ConsumerGroup
+	delayQueue                messaging.DelayQueue
 }
 
 func NewCartAbandonmentService(
@@ -55,14 +55,14 @@ func (s *CartAbandonmentService) handleMessage(ctx context.Context, msg *dto.Mes
 
 func (s *CartAbandonmentService) Start(ctx context.Context) error {
 	log.Println("Starting Cart Abandonment Service...")
-	
+
 	// Start delay queue processing
 	go func() {
 		if err := s.delayQueue.Start(ctx); err != nil {
 			log.Printf("Delay queue stopped: %v", err)
 		}
 	}()
-	
+
 	// Start consumer group
 	return s.consumerGroup.Start(ctx)
 }

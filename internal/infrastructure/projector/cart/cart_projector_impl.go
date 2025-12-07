@@ -24,7 +24,7 @@ func NewCartProjector(viewRepo readmodelstore.CartStore) gateway.Projector {
 
 func (p *CartProjectorImpl) Handle(ctx context.Context, e event.Event) error {
 	eventID := e.GetEventID().String()
-	
+
 	if _, ok := p.seen[eventID]; ok {
 		return nil
 	}

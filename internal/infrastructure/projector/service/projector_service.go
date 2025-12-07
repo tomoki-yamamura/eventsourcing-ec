@@ -6,9 +6,9 @@ import (
 	"log"
 
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/domain/repository"
+	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging/dto"
-	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 )
 
 type ProjectorService struct {

@@ -7,11 +7,11 @@ import (
 )
 
 type Router struct {
-	cartAddItemHandler           *command.CartAddItemCommandHandler
-	getCartHandler               *query.GetCartQueryHandler
-	createTenantPolicyHandler    *command.CreateTenantCartAbandonedPolicyCommandHandler
-	updateTenantPolicyHandler    *command.UpdateTenantCartAbandonedPolicyCommandHandler
-	getTenantPolicyHandler       *query.GetTenantPolicyQueryHandler
+	cartAddItemHandler        *command.CartAddItemCommandHandler
+	getCartHandler            *query.GetCartQueryHandler
+	createTenantPolicyHandler *command.CreateTenantCartAbandonedPolicyCommandHandler
+	updateTenantPolicyHandler *command.UpdateTenantCartAbandonedPolicyCommandHandler
+	getTenantPolicyHandler    *query.GetTenantPolicyQueryHandler
 }
 
 func NewRouter(

@@ -86,7 +86,6 @@ func (s *CartAbandonmentSubscriber) scheduleCartAbandonmentCheck(ctx context.Con
 	return s.delayQueue.PublishDelayedMessage("cart-abandonment-check", cartID.String(), delayedMessage, delay)
 }
 
-
 func (s *CartAbandonmentSubscriber) loadTenantPolicy(ctx context.Context, tenantID uuid.UUID) (*aggregate.TenantCartAbandonedPolicyAggregate, error) {
 	var policy *aggregate.TenantCartAbandonedPolicyAggregate
 	err := s.tx.RWTx(ctx, func(ctx context.Context) error {

@@ -3,9 +3,10 @@ package value
 type OutboxStatus string
 
 const (
-	OutboxStatusPending   OutboxStatus = "PENDING"
-	OutboxStatusPublished OutboxStatus = "PUBLISHED"
-	OutboxStatusFailed    OutboxStatus = "FAILED"
+	OutboxStatusPending    OutboxStatus = "PENDING"
+	OutboxStatusProcessing OutboxStatus = "PROCESSING"
+	OutboxStatusPublished  OutboxStatus = "PUBLISHED"
+	OutboxStatusFailed     OutboxStatus = "FAILED"
 )
 
 func (s OutboxStatus) String() string {
@@ -22,4 +23,8 @@ func (s OutboxStatus) IsPublished() bool {
 
 func (s OutboxStatus) IsFailed() bool {
 	return s == OutboxStatusFailed
+}
+
+func (s OutboxStatus) IsProcessing() bool {
+	return s == OutboxStatusProcessing
 }

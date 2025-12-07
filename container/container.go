@@ -9,17 +9,17 @@ import (
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/eventstore"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/eventstore/deserializer"
 	outboxRepo "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/outbox"
+	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
+	tenantReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/tenant"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/delayqueue"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/kafka"
 	outboxPublisher "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/messaging/outbox"
-	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
-	tenantReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/tenant"
+	cartProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/cart"
+	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
+	tenantProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/tenant"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber"
 	cartAbandonmentService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/subscriber/service"
-	cartProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/cart"
-	tenantProjector "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/tenant"
-	projectorService "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/projector/service"
 	commandUseCase "github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/command"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/gateway"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/messaging"
@@ -44,22 +44,22 @@ type Container struct {
 	OutboxPublisher messaging.OutboxPublisher
 
 	// Read model
-	CartStore        readmodelstore.CartStore
+	CartStore         readmodelstore.CartStore
 	TenantPolicyStore readmodelstore.TenantPolicyStore
 
 	// Subscribers
 	CartAbandonmentSubscriber messaging.Subscriber
-	CartProjector            gateway.Projector
-	TenantPolicyProjector    gateway.Projector
+	CartProjector             gateway.Projector
+	TenantPolicyProjector     gateway.Projector
 
 	// Consumer Groups
 	CartAbandonmentConsumer messaging.ConsumerGroup
 	ProjectorConsumer       messaging.ConsumerGroup
 
 	// Use case layer
-	CartAddItemCommand                      commandUseCase.CartAddItemCommandInterface
-	CreateTenantCartAbandonedPolicyCommand  commandUseCase.CreateTenantCartAbandonedPolicyCommandInterface
-	UpdateTenantCartAbandonedPolicyCommand  commandUseCase.UpdateTenantCartAbandonedPolicyCommandInterface
+	CartAddItemCommand                     commandUseCase.CartAddItemCommandInterface
+	CreateTenantCartAbandonedPolicyCommand commandUseCase.CreateTenantCartAbandonedPolicyCommandInterface
+	UpdateTenantCartAbandonedPolicyCommand commandUseCase.UpdateTenantCartAbandonedPolicyCommandInterface
 	GetCartQuery                           queryUseCase.GetCartQueryInterface
 	GetTenantPolicyQuery                   queryUseCase.GetTenantPolicyQueryInterface
 
@@ -136,10 +136,10 @@ func (c *Container) Inject(ctx context.Context, cfg *config.Config) error {
 		c.CartAbandonmentConsumer,
 		c.DelayQueue,
 	)
-	
+
 	// Combined projector that handles both cart and tenant policy events
 	combinedProjector := projectorService.NewCombinedProjector(c.CartProjector, c.TenantPolicyProjector)
-	
+
 	c.ProjectorService = projectorService.NewProjectorService(
 		c.Transaction,
 		c.Deserializer,

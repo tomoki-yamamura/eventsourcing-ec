@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/testutil"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/transaction"
-	cartReadModel "github.com/tomoki-yamamura/eventsourcing-ec/internal/infrastructure/database/readmodel/cart"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/ports/readmodelstore/dto"
 	"github.com/tomoki-yamamura/eventsourcing-ec/internal/usecase/query"
 )
@@ -56,24 +56,24 @@ func TestGetCartQuery_Query(t *testing.T) {
 			dbClient := testutil.NewTestDBClient(t)
 			ctx, tx := testutil.BeginTxCtx(t, dbClient)
 			txRepo := transaction.NewTransaction(dbClient.GetDB())
-			
+
 			uniqueCartID := uuid.New().String()
 			uniqueItemID1 := uuid.New().String()
 			uniqueItemID2 := uuid.New().String()
-			
+
 			// Insert test data in transaction
 			_, err := tx.ExecContext(ctx, `
 				INSERT INTO carts (id, user_id, tenant_id, status, total_amount, item_count, version) 
 				VALUES (?, ?, ?, ?, ?, ?, ?)
 			`, uniqueCartID, tt.expectedUserID, uuid.New().String(), tt.expectedStatus, 150.0, 2, 1)
 			require.NoError(t, err)
-			
+
 			_, err = tx.ExecContext(ctx, `
 				INSERT INTO cart_items (id, cart_id, name, price) 
 				VALUES (?, ?, ?, ?), (?, ?, ?, ?)
 			`, uniqueItemID1, uniqueCartID, "Test Item 1", 100.0, uniqueItemID2, uniqueCartID, "Test Item 2", 50.0)
 			require.NoError(t, err)
-			
+
 			// Commit the transaction so the data is visible to the query
 			err = tx.Commit()
 			require.NoError(t, err)

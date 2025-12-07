@@ -7,7 +7,7 @@ import (
 )
 
 type ConsumerGroup interface {
-	AddHandler(handler MessageHandler) 
+	AddHandler(handler MessageHandler)
 	Start(ctx context.Context) error
 	Close() error
 }

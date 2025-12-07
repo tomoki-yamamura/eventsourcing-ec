@@ -225,21 +225,21 @@ func TestTenantCartAbandonedPolicyAggregate_IsWithinQuietTime(t *testing.T) {
 		want          bool
 	}{
 		"should return true when within normal quiet time": {
-			quietTimeFrom: time.Date(2023, 1, 1, 22, 0, 0, 0, time.UTC), // 22:00
-			quietTimeTo:   time.Date(2023, 1, 1, 8, 0, 0, 0, time.UTC),  // 08:00
+			quietTimeFrom: time.Date(2023, 1, 1, 22, 0, 0, 0, time.UTC),  // 22:00
+			quietTimeTo:   time.Date(2023, 1, 1, 8, 0, 0, 0, time.UTC),   // 08:00
 			now:           time.Date(2023, 1, 1, 23, 30, 0, 0, time.UTC), // 23:30
 			want:          true,
 		},
 		"should return true when within overnight quiet time": {
 			quietTimeFrom: time.Date(2023, 1, 1, 22, 0, 0, 0, time.UTC), // 22:00
 			quietTimeTo:   time.Date(2023, 1, 1, 8, 0, 0, 0, time.UTC),  // 08:00
-			now:           time.Date(2023, 1, 1, 2, 0, 0, 0, time.UTC),   // 02:00
+			now:           time.Date(2023, 1, 1, 2, 0, 0, 0, time.UTC),  // 02:00
 			want:          true,
 		},
 		"should return false when outside quiet time": {
 			quietTimeFrom: time.Date(2023, 1, 1, 22, 0, 0, 0, time.UTC), // 22:00
 			quietTimeTo:   time.Date(2023, 1, 1, 8, 0, 0, 0, time.UTC),  // 08:00
-			now:           time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC),  // 10:00
+			now:           time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC), // 10:00
 			want:          false,
 		},
 		"should return true when within same day quiet time": {
