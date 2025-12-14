@@ -190,6 +190,89 @@ GET /tenants/{aggregate_id}/cart-abandoned-policies
 
 ---
 
+## Directory Structure
+
+```
+.
+├── README.md               # Project documentation
+├── Taskfile.yaml          # Task automation configuration
+├── main.go                # Application entry point
+├── go.mod                 # Go module dependencies
+├── go.sum                 # Go module checksums
+├── docker-compose.yaml    # Docker services configuration
+├── init-topics.sh         # Kafka topics initialization
+├── .envrc                 # Environment variables (direnv)
+├── .envrc.example         # Environment variables template
+├── docker/                # Docker configurations
+├── db/                    # Database migration files
+├── container/             # Container-related files
+└── internal/              # Application source code
+    ├── config/            # Configuration management
+    ├── errors/            # Custom error types
+    ├── domain/            # Domain layer (DDD)
+    │   ├── aggregate/     # Domain aggregates (Cart, Tenant)
+    │   ├── command/       # Domain commands
+    │   ├── entity/        # Domain entities
+    │   ├── event/         # Domain events
+    │   ├── repository/    # Domain repository interfaces
+    │   └── value/         # Value objects (Price, Quantity, etc.)
+    ├── usecase/           # Application layer (CQRS)
+    │   ├── command/       # Command handlers and inputs
+    │   ├── query/         # Query handlers, inputs, outputs
+    │   └── ports/         # Interface definitions
+    │       ├── gateway/   # External service interfaces
+    │       ├── messaging/ # Messaging interfaces and DTOs
+    │       ├── presenter/ # Presentation interfaces
+    │       ├── readmodelstore/ # Read model storage interfaces
+    │       └── view/      # View interfaces
+    └── infrastructure/    # Infrastructure layer
+        ├── database/      # Database implementations
+        │   ├── client/    # Database clients
+        │   ├── eventstore/ # Event Store implementation
+        │   │   ├── deserializer/ # Event deserialization
+        │   │   └── migration/    # Event store migrations
+        │   ├── outbox/    # Outbox pattern implementation
+        │   ├── readmodel/ # Read model implementations
+        │   │   ├── cart/  # Cart read model
+        │   │   ├── tenant/ # Tenant read model
+        │   │   └── migrations/ # Read model migrations
+        │   ├── testutil/  # Database testing utilities
+        │   └── transaction/ # Transaction management
+        ├── dto/           # Data transfer objects
+        ├── handler/       # HTTP handlers
+        │   ├── command/   # Command endpoint handlers
+        │   ├── query/     # Query endpoint handlers
+        │   ├── request/   # HTTP request models
+        │   └── response/  # HTTP response models
+        ├── messaging/     # Messaging implementations
+        │   ├── kafka/     # Kafka integration
+        │   │   └── ksql/  # KSQL configurations
+        │   └── outbox/    # Outbox messaging
+        ├── presenter/     # Presentation layer
+        │   └── viewmodel/ # View models
+        ├── projector/     # Event projectors
+        │   ├── cart/      # Cart projector
+        │   ├── service/   # Projector services
+        │   └── tenant/    # Tenant projector
+        ├── delayqueue/    # Delay queue implementation
+        ├── register/      # Dependency injection
+        ├── router/        # HTTP routing
+        ├── subscriber/    # Event subscribers
+        │   └── service/   # Subscriber services
+        └── view/          # View implementations
+```
+
+### Key Directories
+
+- **`internal/domain/`**: Core business logic following DDD principles
+- **`internal/usecase/`**: Application logic implementing CQRS pattern
+- **`internal/infrastructure/`**: External concerns (database, HTTP, messaging)
+- **`internal/infrastructure/database/eventstore/`**: Event sourcing implementation
+- **`internal/infrastructure/messaging/`**: Kafka integration and outbox pattern
+- **`internal/infrastructure/projector/`**: Read model projection logic
+
+---
+
 ## Database Schema
 
 ### Event Store Tables
